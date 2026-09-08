@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/relation"
+             name="RelationExpressions" id="Definitions_Relation">
+  <decision id="Decision_Relation" name="People">
+    <variable name="People"/>
+    <relation>
+      <column name="name"/>
+      <column name="age"/>
+      <row>
+        <literalExpression><text>"Ann"</text></literalExpression>
+        <literalExpression><text>30</text></literalExpression>
+      </row>
+      <row>
+        <literalExpression><text>"Bob"</text></literalExpression>
+        <literalExpression><text>15</text></literalExpression>
+      </row>
+    </relation>
+  </decision>
+</definitions>
