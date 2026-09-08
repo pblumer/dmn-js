@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_15"
+             name="Eligibility"
+             namespace="https://example.com/dmn15/eligibility">
+  <inputData id="InputData_Age" name="Age" />
+  <decision id="Decision_Eligibility" name="Eligibility">
+    <informationRequirement id="InformationRequirement_Age">
+      <requiredInput href="#InputData_Age" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_Eligibility" hitPolicy="UNIQUE">
+      <input id="InputClause_Age" label="Age">
+        <inputExpression id="LiteralExpression_Age" typeRef="number">
+          <text>Age</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_Result" name="result" typeRef="string" />
+      <rule id="DecisionRule_Adult">
+        <inputEntry id="UnaryTests_Adult"><text>&gt;= 18</text></inputEntry>
+        <outputEntry id="LiteralExpression_Adult"><text>"adult"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_InputData_Age" dmnElementRef="InputData_Age">
+        <dc:Bounds x="120" y="260" width="125" height="45" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Eligibility" dmnElementRef="Decision_Eligibility">
+        <dc:Bounds x="100" y="80" width="180" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_InformationRequirement_Age" dmnElementRef="InformationRequirement_Age">
+        <di:waypoint x="182" y="260" />
+        <di:waypoint x="190" y="160" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
