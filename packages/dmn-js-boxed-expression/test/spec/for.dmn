@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/for"
+             name="ForExpressions" id="Definitions_For">
+  <decision id="Decision_For" name="Doubled">
+    <variable name="Doubled"/>
+    <for iteratorVariable="x">
+      <in>
+        <literalExpression><text>[1, 2, 3]</text></literalExpression>
+      </in>
+      <return>
+        <literalExpression><text>x * 2</text></literalExpression>
+      </return>
+    </for>
+  </decision>
+</definitions>

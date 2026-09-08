@@ -20,6 +20,7 @@ import ContextModule from './features/context';
 import ListModule from './features/list';
 import RelationModule from './features/relation';
 import ConditionalModule from './features/conditional';
+import ForModule from './features/for';
 import ViewDrdModule from './features/view-drd';
 import ElementPropertiesModule from './features/element-properties';
 import ElementLogicModule from './features/element-logic';
@@ -237,6 +238,7 @@ export class Viewer extends BaseViewer {
       ListModule,
       RelationModule,
       ConditionalModule,
+      ForModule,
       LiteralExpressionModule,
       ElementVariableModule
     ];
