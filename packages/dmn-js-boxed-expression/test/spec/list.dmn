@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/list"
+             name="ListExpressions" id="Definitions_List">
+  <decision id="Decision_List" name="Numbers">
+    <variable name="Numbers"/>
+    <list>
+      <literalExpression><text>1</text></literalExpression>
+      <literalExpression><text>2</text></literalExpression>
+      <literalExpression><text>3</text></literalExpression>
+    </list>
+  </decision>
+</definitions>

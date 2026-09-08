@@ -17,6 +17,7 @@ import LiteralExpressionModule from './features/literal-expression';
 import FunctionDefinitionEditorModule from './features/function-definition';
 import InvocationModule from './features/invocation';
 import ContextModule from './features/context';
+import ListModule from './features/list';
 import ViewDrdModule from './features/view-drd';
 import ElementPropertiesModule from './features/element-properties';
 import ElementLogicModule from './features/element-logic';
@@ -231,6 +232,7 @@ export class Viewer extends BaseViewer {
       FunctionDefinitionEditorModule,
       InvocationModule,
       ContextModule,
+      ListModule,
       LiteralExpressionModule,
       ElementVariableModule
     ];
