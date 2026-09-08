@@ -10,6 +10,7 @@ import KeyboardModule from './features/keyboard';
 import ModelingModule from './features/modeling';
 import LiteralExpressionEditorComponent from './features/literal-expression/editor';
 import FunctionDefinitionEditorModule from './features/function-definition/editor';
+import InvocationEditorModule from './features/invocation/editor';
 import ElementPropertiesModule from './features/element-properties/editor';
 import CoreModule from './core';
 import ElementVariableModule from './features/element-variable/editor';
@@ -24,6 +25,7 @@ export class Editor extends Viewer {
       EditorActionsModule,
       ElementPropertiesModule,
       FunctionDefinitionEditorModule,
+      InvocationEditorModule,
       ExpressionLanguagesModule,
       FeelLanguageContextModule,
       LiteralExpressionEditorComponent,
