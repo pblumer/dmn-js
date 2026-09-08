@@ -5,7 +5,9 @@ export class ContextEditor {
     this._modeling = modeling;
   }
 
-  updateVariable(variable, properties) {
-    this._modeling.updateProperties(variable, properties);
+  updateVariable(entry, properties) {
+    this._modeling.updateProperties(entry, {
+      variable: properties
+    });
   }
 }
