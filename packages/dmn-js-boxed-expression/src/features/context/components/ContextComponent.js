@@ -29,7 +29,7 @@ function ContextComponent({ expression }) {
 
 function ContextEntry({ entry }) {
   const variable = entry.get('variable');
-  const expression = entry.get('expression');
+  const expression = entry.get('value');
 
   return (
     <div className="context-entry">
