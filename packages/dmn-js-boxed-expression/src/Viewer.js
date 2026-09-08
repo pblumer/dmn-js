@@ -18,6 +18,7 @@ import FunctionDefinitionEditorModule from './features/function-definition';
 import InvocationModule from './features/invocation';
 import ContextModule from './features/context';
 import ListModule from './features/list';
+import RelationModule from './features/relation';
 import ViewDrdModule from './features/view-drd';
 import ElementPropertiesModule from './features/element-properties';
 import ElementLogicModule from './features/element-logic';
@@ -154,7 +155,7 @@ export class Viewer extends BaseViewer {
   }
 
   /**
-   * Emit an event on the underlying {@link EventBus}
+   * Emit an event on the underlying {@link EventBus}.
    *
    * @param  {string} type
    * @param  {Object} event
@@ -233,6 +234,7 @@ export class Viewer extends BaseViewer {
       InvocationModule,
       ContextModule,
       ListModule,
+      RelationModule,
       LiteralExpressionModule,
       ElementVariableModule
     ];
