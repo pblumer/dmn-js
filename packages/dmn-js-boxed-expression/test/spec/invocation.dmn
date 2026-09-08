@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/invocation"
+             name="Invocation" id="Definitions_Invocation">
+  <inputData id="Input_Total" name="Order Total">
+    <variable name="Order Total" typeRef="number"/>
+  </inputData>
+  <businessKnowledgeModel id="BKM_DiscountRate" name="Discount Rate">
+    <variable name="Discount Rate" typeRef="number"/>
+    <encapsulatedLogic kind="FEEL">
+      <formalParameter name="total" typeRef="number"/>
+      <literalExpression>
+        <text>if total &gt; 1000 then 0.2 else 0.1</text>
+      </literalExpression>
+    </encapsulatedLogic>
+  </businessKnowledgeModel>
+  <decision id="Decision_Discount" name="Order Discount">
+    <variable name="Order Discount" typeRef="number"/>
+    <informationRequirement>
+      <requiredInput href="#Input_Total"/>
+    </informationRequirement>
+    <knowledgeRequirement>
+      <requiredKnowledge href="#BKM_DiscountRate"/>
+    </knowledgeRequirement>
+    <invocation>
+      <literalExpression><text>Discount Rate</text></literalExpression>
+      <binding>
+        <parameter name="total"/>
+        <literalExpression><text>Order Total</text></literalExpression>
+      </binding>
+    </invocation>
+  </decision>
+</definitions>

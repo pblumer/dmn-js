@@ -18,6 +18,7 @@ import { domify } from 'min-dom';
 
 import simpleXML from './literal-expression.dmn';
 import bkmXML from './bkm-literal-expression.dmn';
+import invocationXML from './invocation.dmn';
 
 
 const singleStart = window.__env__ && window.__env__.SINGLE_START === 'viewer';
@@ -51,6 +52,36 @@ describe('Viewer', function() {
 
   (singleStart ? it.only : it)('should import business knowledge model', function() {
     return createViewer(bkmXML);
+  });
+
+
+  it('should render DMN 1.5 invocation', async function() {
+
+    // given
+    const viewer = new Viewer({
+      container: testContainer,
+      dmnVersion: '1.5'
+    });
+
+    // when
+    const { warnings } = await viewer.importXML(invocationXML, { open: false });
+
+    // then
+    expect(warnings).to.have.lengthOf(0);
+
+    const invocationView = viewer.getViews().find(view => view.id === 'Decision_Discount');
+
+    expect(invocationView).to.exist;
+
+    await viewer.open(invocationView);
+
+    const invocation = testContainer.querySelector('.invocation-expression');
+
+    expect(invocation).to.exist;
+    expect(invocation.textContent).to.contain('Discount Rate');
+    expect(invocation.textContent).to.contain('total');
+    expect(invocation.textContent).to.contain('Order Total');
+    expect(testContainer.textContent).to.not.contain('is not supported');
   });
 
 

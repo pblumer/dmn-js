@@ -15,6 +15,7 @@ import RenderModule from './render';
 import PoweredByModule from './features/powered-by';
 import LiteralExpressionModule from './features/literal-expression';
 import FunctionDefinitionEditorModule from './features/function-definition';
+import InvocationModule from './features/invocation';
 import ViewDrdModule from './features/view-drd';
 import ElementPropertiesModule from './features/element-properties';
 import ElementLogicModule from './features/element-logic';
@@ -227,6 +228,7 @@ export class Viewer extends BaseViewer {
       ElementPropertiesModule,
       ElementLogicModule,
       FunctionDefinitionEditorModule,
+      InvocationModule,
       LiteralExpressionModule,
       ElementVariableModule
     ];
