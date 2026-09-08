@@ -14,9 +14,9 @@ export class ConditionalComponentProvider {
 }
 
 function ConditionalComponent({ expression }) {
-  const ifExpression = expression.get('if');
-  const thenExpression = expression.get('then');
-  const elseExpression = expression.get('else');
+  const ifExpression = getChildExpression(expression.get('if'));
+  const thenExpression = getChildExpression(expression.get('then'));
+  const elseExpression = getChildExpression(expression.get('else'));
 
   return (
     <div className="conditional-expression">
@@ -31,6 +31,10 @@ function ConditionalComponent({ expression }) {
       </div>
     </div>
   );
+}
+
+function getChildExpression(childExpression) {
+  return childExpression && childExpression.get('expression');
 }
 
 function Expression({ expression }, context) {
