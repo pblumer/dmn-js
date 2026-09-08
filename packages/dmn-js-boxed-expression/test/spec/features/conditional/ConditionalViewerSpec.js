@@ -49,9 +49,9 @@ describe('ConditionalViewer', function() {
     expect(ifBranch.textContent).to.contain('score >= 60');
     expect(thenBranch.textContent).to.contain('"pass"');
     expect(elseBranch.textContent).to.contain('"fail"');
-    expect(ifBranch.querySelector('.literal-expression')).to.exist;
-    expect(thenBranch.querySelector('.literal-expression')).to.exist;
-    expect(elseBranch.querySelector('.literal-expression')).to.exist;
+    expect(ifBranch.querySelector('.textarea')).to.exist;
+    expect(thenBranch.querySelector('.textarea')).to.exist;
+    expect(elseBranch.querySelector('.textarea')).to.exist;
     expect(testContainer.textContent).to.not.contain('is not supported');
 
     viewer.destroy();
