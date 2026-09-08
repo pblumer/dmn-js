@@ -1,4 +1,7 @@
+import Input from 'dmn-js-shared/lib/components/Input';
 import { is } from 'dmn-js-shared/lib/util/ModelUtil';
+
+import { withChangeSupport } from '../../../util/withChangeSupport';
 
 
 export class InvocationComponentProvider {
@@ -36,11 +39,16 @@ function InvocationComponent({ expression }, context) {
 function Binding({ binding }, context) {
   const parameter = binding.get('parameter');
   const bindingFormula = binding.get('bindingFormula');
+  const invocation = context.injector.get('invocation', false);
 
   return (
     <div className="invocation-binding">
       <div className="invocation-parameter">
-        { parameter && parameter.name }
+        {
+          invocation && parameter
+            ? <InvocationParameter parameter={ parameter } />
+            : parameter && parameter.name
+        }
       </div>
       <div className="invocation-binding-expression">
         <Expression expression={ bindingFormula } />
@@ -48,6 +56,21 @@ function Binding({ binding }, context) {
     </div>
   );
 }
+
+const InvocationParameter = withChangeSupport(
+  function({ parameter }, context) {
+    const invocation = context.injector.get('invocation');
+    const translate = context.injector.get('translate');
+
+    return <Input
+      label={ translate('Parameter') }
+      className="invocation-parameter-input editor"
+      value={ parameter.name || '' }
+      onChange={ name => invocation.updateParameter(parameter, { name }) }
+    />;
+  },
+  props => [ props.parameter ]
+);
 
 function Expression({ expression }, context) {
   if (!expression) {
