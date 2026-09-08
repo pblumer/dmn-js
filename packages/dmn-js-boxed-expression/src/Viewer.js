@@ -155,7 +155,7 @@ export class Viewer extends BaseViewer {
   }
 
   /**
-   * Emit an event on the underlying {@link EventBus}.
+   * Emit an event on the underlying {@link EventBus}
    *
    * @param  {string} type
    * @param  {Object} event
