@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/context"
+             name="ContextExpressions" id="Definitions_Context">
+  <inputData id="Input_Points" name="Points">
+    <variable name="Points" typeRef="number"/>
+  </inputData>
+  <decision id="Decision_Score" name="Score">
+    <variable name="Score" typeRef="number"/>
+    <informationRequirement>
+      <requiredInput href="#Input_Points"/>
+    </informationRequirement>
+    <context>
+      <contextEntry>
+        <variable name="Base" typeRef="number"/>
+        <literalExpression><text>Points * 2</text></literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="Bonus" typeRef="number"/>
+        <literalExpression><text>Base + 10</text></literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <literalExpression><text>Bonus</text></literalExpression>
+      </contextEntry>
+    </context>
+  </decision>
+</definitions>
