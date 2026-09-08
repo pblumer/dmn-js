@@ -1,4 +1,7 @@
+import Input from 'dmn-js-shared/lib/components/Input';
 import { is } from 'dmn-js-shared/lib/util/ModelUtil';
+
+import { withChangeSupport } from '../../../util/withChangeSupport';
 
 
 export class ContextComponentProvider {
@@ -27,14 +30,19 @@ function ContextComponent({ expression }) {
   );
 }
 
-function ContextEntry({ entry }) {
+function ContextEntry({ entry }, context) {
   const variable = entry.get('variable');
   const expression = entry.get('value');
+  const contextEditor = context.injector.get('context', false);
 
   return (
     <div className="context-entry">
       <div className="context-entry-variable">
-        { variable && variable.name }
+        {
+          contextEditor && variable
+            ? <ContextVariable variable={ variable } />
+            : variable && variable.name
+        }
       </div>
       <div className="context-entry-expression">
         <Expression expression={ expression } />
@@ -42,6 +50,21 @@ function ContextEntry({ entry }) {
     </div>
   );
 }
+
+const ContextVariable = withChangeSupport(
+  function({ variable }, context) {
+    const contextEditor = context.injector.get('context');
+    const translate = context.injector.get('translate');
+
+    return <Input
+      label={ translate('Variable') }
+      className="context-variable-input editor"
+      value={ variable.name || '' }
+      onChange={ name => contextEditor.updateVariable(variable, { name }) }
+    />;
+  },
+  props => [ props.variable ]
+);
 
 function Expression({ expression }, context) {
   if (!expression) {
