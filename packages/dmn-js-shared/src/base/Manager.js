@@ -49,6 +49,7 @@ export default class Manager {
    * Create a new instance with the given options.
    *
    * @param  {Object} options
+   * @param  {string} [options.dmnVersion] DMN metamodel version
    *
    * @return {Manager}
    */
@@ -693,7 +694,9 @@ export default class Manager {
   }
 
   _createModdle(options) {
-    return new DmnModdle(options.moddleExtensions);
+    return new DmnModdle(options.moddleExtensions, {
+      dmnVersion: options.dmnVersion
+    });
   }
 
   /**
