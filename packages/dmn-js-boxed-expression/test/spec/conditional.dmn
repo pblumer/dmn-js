@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/conditional"
+             name="ConditionalExpressions" id="Definitions_Conditional">
+  <decision id="Decision_Conditional" name="Grade">
+    <variable name="Grade" typeRef="string"/>
+    <conditional>
+      <if>
+        <literalExpression><text>score &gt;= 60</text></literalExpression>
+      </if>
+      <then>
+        <literalExpression><text>"pass"</text></literalExpression>
+      </then>
+      <else>
+        <literalExpression><text>"fail"</text></literalExpression>
+      </else>
+    </conditional>
+  </decision>
+</definitions>
