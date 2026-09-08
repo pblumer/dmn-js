@@ -34,7 +34,7 @@ function ConditionalComponent({ expression }) {
 }
 
 function getChildExpression(childExpression) {
-  return childExpression && childExpression.get('expression');
+  return childExpression && childExpression.get('value');
 }
 
 function Expression({ expression }, context) {
