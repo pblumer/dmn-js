@@ -24,7 +24,7 @@ describe('ContextEditor', function() {
     const { warnings } = await editor.importXML(xml, { open: false });
     const warningMessages = warnings.map(warning => warning.message).join('\n');
 
-    expect(warnings, `${warningMessages}\n${xml}`).to.have.lengthOf(0);
+    expect(warnings, warningMessages).to.have.lengthOf(0);
 
     const contextView = editor.getViews().find(
       view => view.id === 'Decision_Score'
@@ -70,25 +70,31 @@ describe('ContextEditor', function() {
     const commandStack = activeViewer.get('commandStack');
 
     // when
-    context.updateVariable(variable, { name: 'BaseAmount' });
+    context.updateVariable(firstEntry, { name: 'BaseAmount' });
 
     // then
     expect(variable.name).to.eql('BaseAmount');
+    expect(firstEntry.get('name')).not.to.exist;
 
     // when
     commandStack.undo();
 
     // then
     expect(variable.name).to.eql('Base');
+    expect(firstEntry.get('name')).not.to.exist;
 
     // when
     commandStack.redo();
 
     // then
     expect(variable.name).to.eql('BaseAmount');
+    expect(firstEntry.get('name')).not.to.exist;
 
     // when
     const { xml } = await editor.saveXML();
+
+    // then
+    expect(xml).not.to.include('<contextEntry name=');
 
     editor.destroy();
 
