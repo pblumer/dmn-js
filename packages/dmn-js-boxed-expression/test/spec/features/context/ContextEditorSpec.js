@@ -22,8 +22,9 @@ describe('ContextEditor', function() {
     });
 
     const { warnings } = await editor.importXML(xml, { open: false });
+    const warningMessages = warnings.map(warning => warning.message).join('\n');
 
-    expect(warnings).to.have.lengthOf(0);
+    expect(warnings, warningMessages).to.have.lengthOf(0);
 
     const contextView = editor.getViews().find(
       view => view.id === 'Decision_Score'
