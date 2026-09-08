@@ -40,7 +40,7 @@ function ContextEntry({ entry }, context) {
       <div className="context-entry-variable">
         {
           contextEditor && variable
-            ? <ContextVariable variable={ variable } />
+            ? <ContextVariable entry={ entry } variable={ variable } />
             : variable && variable.name
         }
       </div>
@@ -52,7 +52,7 @@ function ContextEntry({ entry }, context) {
 }
 
 const ContextVariable = withChangeSupport(
-  function({ variable }, context) {
+  function({ entry, variable }, context) {
     const contextEditor = context.injector.get('context');
     const translate = context.injector.get('translate');
 
@@ -60,10 +60,10 @@ const ContextVariable = withChangeSupport(
       label={ translate('Variable') }
       className="context-variable-input editor"
       value={ variable.name || '' }
-      onChange={ name => contextEditor.updateVariable(variable, { name }) }
+      onChange={ name => contextEditor.updateVariable(entry, { name }) }
     />;
   },
-  props => [ props.variable ]
+  props => [ props.entry, props.variable ]
 );
 
 function Expression({ expression }, context) {
