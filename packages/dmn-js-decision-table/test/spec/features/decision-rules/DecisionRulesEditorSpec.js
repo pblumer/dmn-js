@@ -444,5 +444,5 @@ function isFirefox() {
 }
 
 function skipFF() {
-  return isFirefox() ? it.only : it;
+  return isFirefox() ? it.skip : it;
 }

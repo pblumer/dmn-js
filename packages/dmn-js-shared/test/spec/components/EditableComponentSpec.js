@@ -3,6 +3,8 @@ import { expect } from 'chai';
 
 import TestContainerSupport from 'mocha-test-container-support';
 
+import { fireEvent } from '@testing-library/dom';
+
 import { Component } from 'inferno';
 
 import {
@@ -153,7 +155,7 @@ describe('components/EditableComponent', function() {
       const editor = node.querySelector('.content-editable');
 
       // when
-      editor.focus();
+      fireEvent.focus(editor);
 
       // then
       expect(onFocus).to.have.been.called;
@@ -161,7 +163,7 @@ describe('components/EditableComponent', function() {
       expect(onBlur).not.to.have.been.called;
 
       // when (2)
-      editor.blur();
+      fireEvent.blur(editor);
 
       // then
       expect(onBlur).to.have.been.called;
