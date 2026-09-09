@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/some"
+             name="SomeExpressions" id="Definitions_Some">
+  <decision id="Decision_Some" name="AnyPositive">
+    <variable name="AnyPositive" typeRef="boolean"/>
+    <some iteratorVariable="x">
+      <in>
+        <literalExpression><text>[-1, 0, 2]</text></literalExpression>
+      </in>
+      <satisfies>
+        <literalExpression><text>x &gt; 0</text></literalExpression>
+      </satisfies>
+    </some>
+  </decision>
+</definitions>
