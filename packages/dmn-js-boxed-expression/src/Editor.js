@@ -12,6 +12,7 @@ import LiteralExpressionEditorComponent from './features/literal-expression/edit
 import FunctionDefinitionEditorModule from './features/function-definition/editor';
 import InvocationEditorModule from './features/invocation/editor';
 import ContextEditorModule from './features/context/editor';
+import ExpressionAuthoringModule from './features/expression-authoring/editor';
 import ElementPropertiesModule from './features/element-properties/editor';
 import CoreModule from './core';
 import ElementVariableModule from './features/element-variable/editor';
@@ -24,6 +25,7 @@ export class Editor extends Viewer {
       CoreModule,
       ModelingModule,
       EditorActionsModule,
+      ExpressionAuthoringModule,
       ElementPropertiesModule,
       FunctionDefinitionEditorModule,
       InvocationEditorModule,

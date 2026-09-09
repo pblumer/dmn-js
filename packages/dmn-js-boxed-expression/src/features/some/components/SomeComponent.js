@@ -1,5 +1,7 @@
 import { is } from 'dmn-js-shared/lib/util/ModelUtil';
 
+import IteratorVariable from '../../../components/IteratorVariable';
+
 
 export class SomeComponentProvider {
   static $inject = [ 'components' ];
@@ -16,11 +18,12 @@ export class SomeComponentProvider {
 function SomeComponent({ expression }) {
   const inExpression = getChildExpression(expression.get('in'));
   const satisfiesExpression = getChildExpression(expression.get('satisfies'));
-  const iteratorVariable = expression.get('iteratorVariable') || '';
 
   return (
     <div className="some-expression">
-      <div className="some-iterator">{ iteratorVariable }</div>
+      <div className="some-iterator">
+        <IteratorVariable expression={ expression } />
+      </div>
       <div className="some-in">
         <Expression expression={ inExpression } />
       </div>

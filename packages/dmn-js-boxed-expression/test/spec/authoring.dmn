@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/authoring"
+             name="Authoring" id="Definitions_Authoring">
+  <decision id="Decision_Authoring" name="Result">
+    <variable name="Result"/>
+    <literalExpression><text>1</text></literalExpression>
+  </decision>
+</definitions>
