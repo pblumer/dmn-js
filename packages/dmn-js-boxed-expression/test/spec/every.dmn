@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             namespace="https://example.com/dmn15/every"
+             name="EveryExpressions" id="Definitions_Every">
+  <decision id="Decision_Every" name="AllPositive">
+    <variable name="AllPositive" typeRef="boolean"/>
+    <every iteratorVariable="x">
+      <in>
+        <literalExpression><text>[1, 2, 3]</text></literalExpression>
+      </in>
+      <satisfies>
+        <literalExpression><text>x &gt; 0</text></literalExpression>
+      </satisfies>
+    </every>
+  </decision>
+</definitions>
