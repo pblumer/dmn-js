@@ -186,7 +186,7 @@ describe('components/LiteralExpression', function() {
       const node = renderToNode(vTree);
       const editor = getEditor(node);
 
-      editor.focus();
+      fireEvent.focus(editor);
 
       // scenario (1): add line break
 
@@ -242,14 +242,14 @@ describe('components/LiteralExpression', function() {
       const editor = getEditor(node);
 
       // when
-      editor.focus();
+      fireEvent.focusIn(editor);
 
       // then
       expect(onFocus).to.have.been.called;
       expect(onBlur).not.to.have.been.called;
 
       // when (2)
-      editor.blur();
+      fireEvent.focusOut(editor);
 
       // then
       expect(onBlur).to.have.been.called;

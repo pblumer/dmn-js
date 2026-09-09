@@ -3,6 +3,8 @@ import { expect } from 'chai';
 
 import TestContainerSupport from 'mocha-test-container-support';
 
+import { fireEvent } from '@testing-library/dom';
+
 import { Component, render } from 'inferno';
 
 import {
@@ -144,7 +146,7 @@ describe('components/ContentEditable', function() {
 
       const node = renderToNode(vTree);
 
-      node.focus();
+      fireEvent.focus(node);
 
       // scenario (1): add line break
 
@@ -199,14 +201,14 @@ describe('components/ContentEditable', function() {
       );
 
       // when
-      node.focus();
+      fireEvent.focus(node);
 
       // then
       expect(onFocus).to.have.been.called;
       expect(onBlur).not.to.have.been.called;
 
       // when (2)
-      node.blur();
+      fireEvent.blur(node);
 
       // then
       expect(onBlur).to.have.been.called;
@@ -235,14 +237,14 @@ describe('components/ContentEditable', function() {
       // given
       const onChange = sinon.spy();
       const node = renderToNode(<ContentEditable onChange={ onChange } value={ 'F' } />);
-      node.focus();
+      fireEvent.focus(node);
 
       // when
       triggerInputEvent(node, 'BLUB');
 
       // assume
       expect(onChange).not.to.have.been.called;
-      node.blur();
+      fireEvent.blur(node);
 
       // then
       expect(innerText(node)).to.eql('BLUB');
@@ -255,7 +257,7 @@ describe('components/ContentEditable', function() {
       // given
       const onChange = sinon.spy();
       const node = renderToNode(<ContentEditable onChange={ onChange } value={ 'F' } />);
-      node.focus();
+      fireEvent.focus(node);
 
       // when
       triggerInputEvent(node, 'BLUB');
@@ -263,7 +265,7 @@ describe('components/ContentEditable', function() {
 
       // assume
       expect(onChange).not.to.have.been.called;
-      node.blur();
+      fireEvent.blur(node);
 
       // then
       expect(innerText(node)).to.eql('F');
