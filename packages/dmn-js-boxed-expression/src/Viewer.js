@@ -22,6 +22,8 @@ import RelationModule from './features/relation';
 import ConditionalModule from './features/conditional';
 import ForModule from './features/for';
 import EveryModule from './features/every';
+import SomeModule from './features/some';
+import FilterModule from './features/filter';
 import ViewDrdModule from './features/view-drd';
 import ElementPropertiesModule from './features/element-properties';
 import ElementLogicModule from './features/element-logic';
@@ -241,6 +243,8 @@ export class Viewer extends BaseViewer {
       ConditionalModule,
       ForModule,
       EveryModule,
+      SomeModule,
+      FilterModule,
       LiteralExpressionModule,
       ElementVariableModule
     ];
