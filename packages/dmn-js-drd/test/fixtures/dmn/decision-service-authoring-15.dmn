@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="Definitions_DecisionServiceAuthoring"
+             name="Decision Service Authoring"
+             namespace="https://example.com/dmn15/decision-service-authoring">
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_DecisionServiceAuthoring" />
+  </dmndi:DMNDI>
+</definitions>
