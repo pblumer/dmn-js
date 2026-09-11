@@ -127,6 +127,36 @@ describe('features/modeling - DMN 1.5 Decision Service inputs', function() {
   });
 
 
+  it('should remove and restore a derived input with the InformationRequirement', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const commandStack = activeViewer.get('commandStack');
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const eligibility = elementRegistry.get('Decision_Eligibility');
+    const routing = elementRegistry.get('Decision_Routing');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    moveRoutingIntoOutput(modeling, routing, decisionService);
+
+    const requirement = modeling.connect(eligibility, routing);
+
+    expect(referenceHrefs(decisionService.businessObject, 'inputDecision')).to.eql([
+      '#Decision_Eligibility'
+    ]);
+
+    modeling.removeConnection(requirement);
+
+    expect(referenceHrefs(decisionService.businessObject, 'inputDecision')).to.eql([]);
+
+    commandStack.undo();
+
+    expect(referenceHrefs(decisionService.businessObject, 'inputDecision')).to.eql([
+      '#Decision_Eligibility'
+    ]);
+  });
+
+
   it('should persist derived inputs on save and reimport', async function() {
     const activeViewer = modeler.getActiveViewer();
     const elementRegistry = activeViewer.get('elementRegistry');
