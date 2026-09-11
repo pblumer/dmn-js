@@ -329,7 +329,7 @@ DrdUpdater.prototype.updateDecisionServiceInputs = function(definitions) {
     }
 
     var internalReferences = decisionService.get('outputDecision')
-      .concat(decisionService.get('encapsulatedDecision')),
+          .concat(decisionService.get('encapsulatedDecision')),
         internalHrefs = {},
         inputDecisionHrefs = [],
         inputDataHrefs = [];
