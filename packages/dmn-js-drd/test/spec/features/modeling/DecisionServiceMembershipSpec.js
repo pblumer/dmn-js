@@ -110,6 +110,37 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
   });
 
 
+  it('should persist Decision Service membership on save and reimport', async function() {
+    const activeViewer = modeler.getActiveViewer();
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const output = elementRegistry.get('Decision_Output');
+    const encapsulated = elementRegistry.get('Decision_Encapsulated');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    modeling.moveShape(output, { x: -340, y: 0 }, decisionService);
+    modeling.moveShape(encapsulated, { x: -340, y: -20 }, decisionService);
+
+    const { xml } = await modeler.saveXML({ format: true });
+    const { warnings } = await modeler.importXML(xml);
+    const warningMessages = warnings.map(warning => warning.message).join('\n');
+
+    expect(warnings, warningMessages).to.have.lengthOf(0);
+
+    const reimportedViewer = modeler.getActiveViewer();
+    const reimportedRegistry = reimportedViewer.get('elementRegistry');
+    const reimportedService = reimportedRegistry.get('DecisionService_Approval');
+
+    expect(referenceHrefs(reimportedService.businessObject, 'outputDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+    expect(referenceHrefs(reimportedService.businessObject, 'encapsulatedDecision')).to.eql([
+      '#Decision_Encapsulated'
+    ]);
+  });
+
+
   it('should allow resizing a Decision Service', function() {
     const activeViewer = modeler.getActiveViewer();
     const elementRegistry = activeViewer.get('elementRegistry');
