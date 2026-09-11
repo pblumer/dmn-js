@@ -202,6 +202,35 @@ DrdUpdater.prototype.updateBounds = function(shape) {
     width: shape.width,
     height: shape.height
   });
+
+  if (is(businessObject, 'dmn:DecisionService')) {
+    this.updateDecisionServiceDivider(shape);
+  }
+};
+
+DrdUpdater.prototype.updateDecisionServiceDivider = function(shape) {
+  var drdFactory = this._drdFactory,
+      di = shape.businessObject.di,
+      divider = di.get('decisionServiceDividerLine');
+
+  if (!divider) {
+    divider = drdFactory.create('dmndi:DMNDecisionServiceDividerLine', {
+      waypoint: []
+    });
+    divider.$parent = di;
+    di.set('decisionServiceDividerLine', divider);
+  }
+
+  var dividerY = shape.y + Math.round(shape.height * 0.6);
+
+  divider.waypoint = drdFactory.createDiWaypoints([
+    { x: shape.x, y: dividerY },
+    { x: shape.x + shape.width, y: dividerY }
+  ]).map(function(waypoint) {
+    waypoint.$parent = divider;
+
+    return waypoint;
+  });
 };
 
 DrdUpdater.prototype.updateConnectionWaypoints = function(context) {

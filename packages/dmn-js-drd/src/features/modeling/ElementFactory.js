@@ -12,6 +12,7 @@ import BaseElementFactory from 'diagram-js/lib/core/ElementFactory';
 
 export var BUSINESS_KNOWLEDGE_MODEL_SIZE = { width: 135, height: 46 };
 export var DECISION_SIZE = { width: 180, height: 80 };
+export var DECISION_SERVICE_SIZE = { width: 300, height: 200 };
 export var INPUT_DATA_SIZE = { width: 125, height: 45 };
 export var KNOWLEDGE_SOURCE_SIZE = { width: 100, height: 63 };
 
@@ -61,6 +62,18 @@ ElementFactory.prototype.createDrdElement = function(elementType, attrs) {
     }
   }
 
+  if (elementType === 'shape' && is(businessObject, 'dmn:DecisionService')) {
+    var divider = businessObject.di.get('decisionServiceDividerLine');
+
+    if (!divider) {
+      divider = drdFactory.create('dmndi:DMNDecisionServiceDividerLine', {
+        waypoint: []
+      });
+      divider.$parent = businessObject.di;
+      businessObject.di.set('decisionServiceDividerLine', divider);
+    }
+  }
+
   size = this._getDefaultSize(businessObject);
 
   attrs = assign({
@@ -79,6 +92,10 @@ ElementFactory.prototype._getDefaultSize = function(semantic) {
 
   if (is(semantic, 'dmn:Decision')) {
     return DECISION_SIZE;
+  }
+
+  if (is(semantic, 'dmn:DecisionService')) {
+    return DECISION_SERVICE_SIZE;
   }
 
   if (is(semantic, 'dmn:InputData')) {

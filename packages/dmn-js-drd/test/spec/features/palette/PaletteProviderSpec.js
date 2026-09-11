@@ -34,7 +34,21 @@ describe('features/palette', function() {
     var entries = domQueryAll('.entry', paletteElement);
 
     // then
-    expect(entries.length).to.equal(6);
+    expect(entries.length).to.equal(7);
+  }));
+
+
+  it('should provide Decision Service creation', inject(function(canvas) {
+
+    // when
+    var paletteElement = domQuery('.djs-palette', canvas._container);
+    var entries = domQueryAll('.entry', paletteElement);
+    var decisionServiceEntry = Array.from(entries).find(function(entry) {
+      return entry.title === 'Create decision service';
+    });
+
+    // then
+    expect(decisionServiceEntry).to.exist;
   }));
 
 
