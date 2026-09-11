@@ -68,7 +68,10 @@ DrdRules.prototype.init = function() {
   this.addRule('shape.resize', function(context) {
     var shape = context.shape;
 
-    return is(shape, 'dmn:TextAnnotation');
+    return isAny(shape, [
+      'dmn:DecisionService',
+      'dmn:TextAnnotation'
+    ]);
   });
 
 };
@@ -159,6 +162,12 @@ function canMove(elements, target) {
 
   // allow default move check to start move operation
   if (!target) {
+    return true;
+  }
+
+  if (every(elements, function(element) {
+    return is(element, 'dmn:Decision');
+  }) && is(target, 'dmn:DecisionService')) {
     return true;
   }
 
