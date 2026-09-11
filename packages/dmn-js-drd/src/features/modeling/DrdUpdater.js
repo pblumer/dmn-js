@@ -14,6 +14,8 @@ import {
 
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
 
+import { clampDecisionServiceDividerY } from './DecisionServiceUtil';
+
 
 /**
  * Update DMN 1.3 information.
@@ -101,19 +103,99 @@ export default function DrdUpdater(
       return;
     }
 
+    if (is(shape, 'dmn:DecisionService') &&
+        context.oldDecisionServiceDividerY === undefined) {
+      var divider = shape.businessObject.di.get('decisionServiceDividerLine');
+
+      if (divider && divider.waypoint && divider.waypoint.length) {
+        context.oldDecisionServiceDividerY = divider.waypoint[0].y;
+      }
+    }
+
     self.updateBounds(shape);
+  }
+
+  function revertBounds(context) {
+    var shape = context.shape;
+
+    if (!(is(shape, 'dmn:DRGElement') || is(shape, 'dmn:TextAnnotation'))) {
+      return;
+    }
+
+    self.updateBounds(shape, context.oldDecisionServiceDividerY);
   }
 
   this.executed([ 'shape.create', 'shape.move', 'shape.resize' ], updateBounds, true);
 
-  this.reverted([ 'shape.create', 'shape.move', 'shape.resize' ], updateBounds, true);
+  this.reverted([ 'shape.create', 'shape.move', 'shape.resize' ], revertBounds, true);
 
   function updateDecisionServiceMembership(context) {
-    self.updateDecisionServiceMembership(context.shape);
+    var shape = context.shape;
+
+    if (!is(shape, 'dmn:Decision')) {
+      return;
+    }
+
+    if (!context.oldDecisionServiceMemberships) {
+      context.oldDecisionServiceMemberships =
+        self.getDecisionServiceMemberships(shape);
+    }
+
+    self.updateDecisionServiceMembership(shape, context.oldParent);
+  }
+
+  function revertDecisionServiceMembership(context) {
+    self.restoreDecisionServiceMemberships(
+      context.shape,
+      context.oldDecisionServiceMemberships
+    );
   }
 
   this.executed('shape.move', updateDecisionServiceMembership, true);
-  this.reverted('shape.move', updateDecisionServiceMembership, true);
+  this.reverted('shape.move', revertDecisionServiceMembership, true);
+
+  function updateDecisionServiceMembershipFromDivider(context) {
+    var decisionServiceShape = context.element,
+        divider = context.moddleElement;
+
+    if (!is(decisionServiceShape, 'dmn:DecisionService') ||
+        !is(divider, 'dmndi:DMNDecisionServiceDividerLine')) {
+      return;
+    }
+
+    if (!context.oldDecisionServiceMembershipSnapshot) {
+      context.oldDecisionServiceMembershipSnapshot =
+        self.getDecisionServiceMembershipSnapshot(decisionServiceShape);
+    }
+
+    self.reclassifyDecisionServiceMemberships(decisionServiceShape);
+  }
+
+  function revertDecisionServiceMembershipFromDivider(context) {
+    var decisionServiceShape = context.element,
+        divider = context.moddleElement;
+
+    if (!is(decisionServiceShape, 'dmn:DecisionService') ||
+        !is(divider, 'dmndi:DMNDecisionServiceDividerLine')) {
+      return;
+    }
+
+    self.restoreDecisionServiceMembershipSnapshot(
+      decisionServiceShape,
+      context.oldDecisionServiceMembershipSnapshot
+    );
+  }
+
+  this.executed(
+    'element.updateModdleProperties',
+    updateDecisionServiceMembershipFromDivider,
+    true
+  );
+  this.reverted(
+    'element.updateModdleProperties',
+    revertDecisionServiceMembershipFromDivider,
+    true
+  );
 
   function updateConnectionWaypoints(context) {
     self.updateConnectionWaypoints(context);
@@ -221,9 +303,15 @@ DrdUpdater.$inject = [
   'injector'
 ];
 
-DrdUpdater.prototype.updateBounds = function(shape) {
+DrdUpdater.prototype.updateBounds = function(shape, dividerY) {
   var businessObject = shape.businessObject,
-      bounds = businessObject.di.bounds;
+      bounds = businessObject.di.bounds,
+      previousBounds = {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height
+      };
 
   // update bounds
   assign(bounds, {
@@ -234,14 +322,19 @@ DrdUpdater.prototype.updateBounds = function(shape) {
   });
 
   if (is(businessObject, 'dmn:DecisionService')) {
-    this.updateDecisionServiceDivider(shape);
+    this.updateDecisionServiceDivider(shape, previousBounds, dividerY);
   }
 };
 
-DrdUpdater.prototype.updateDecisionServiceDivider = function(shape) {
+DrdUpdater.prototype.updateDecisionServiceDivider = function(
+    shape,
+    previousBounds,
+    dividerY
+) {
   var drdFactory = this._drdFactory,
       di = shape.businessObject.di,
-      divider = di.get('decisionServiceDividerLine');
+      divider = di.get('decisionServiceDividerLine'),
+      hasDividerWaypoints = divider && divider.waypoint && divider.waypoint.length;
 
   if (!divider) {
     divider = drdFactory.create('dmndi:DMNDecisionServiceDividerLine', {
@@ -251,7 +344,15 @@ DrdUpdater.prototype.updateDecisionServiceDivider = function(shape) {
     di.set('decisionServiceDividerLine', divider);
   }
 
-  var dividerY = shape.y + Math.round(shape.height * 0.6);
+  if (dividerY === undefined) {
+    if (hasDividerWaypoints && previousBounds && previousBounds.y !== undefined) {
+      dividerY = divider.waypoint[0].y + shape.y - previousBounds.y;
+    } else {
+      dividerY = shape.y + Math.round(shape.height * 0.6);
+    }
+  }
+
+  dividerY = clampDecisionServiceDividerY(shape, dividerY);
 
   divider.waypoint = drdFactory.createDiWaypoints([
     { x: shape.x, y: dividerY },
@@ -261,11 +362,140 @@ DrdUpdater.prototype.updateDecisionServiceDivider = function(shape) {
 
     return waypoint;
   });
+
+  this.reclassifyDecisionServiceMemberships(shape);
 };
 
-DrdUpdater.prototype.updateDecisionServiceMembership = function(shape) {
-  if (!shape || !is(shape, 'dmn:Decision')) {
+DrdUpdater.prototype.reclassifyDecisionServiceMemberships = function(shape) {
+  if (!shape || !is(shape, 'dmn:DecisionService')) {
     return;
+  }
+
+  var decisionService = shape.businessObject,
+      definitions = decisionService.$parent;
+
+  if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return;
+  }
+
+  var outputReferences = decisionService.get('outputDecision'),
+      encapsulatedReferences = decisionService.get('encapsulatedDecision'),
+      memberHrefs = [],
+      originalProperties = {},
+      decisionsByHref = {},
+      outputHrefs = [],
+      encapsulatedHrefs = [];
+
+  outputReferences.forEach(function(reference) {
+    addUnique(memberHrefs, reference.href);
+    originalProperties[reference.href] = 'outputDecision';
+  });
+
+  encapsulatedReferences.forEach(function(reference) {
+    addUnique(memberHrefs, reference.href);
+
+    if (!originalProperties[reference.href]) {
+      originalProperties[reference.href] = 'encapsulatedDecision';
+    }
+  });
+
+  definitions.get('drgElement').forEach(function(drgElement) {
+    if (is(drgElement, 'dmn:Decision')) {
+      decisionsByHref['#' + drgElement.id] = drgElement;
+    }
+  });
+
+  var divider = decisionService.di &&
+        decisionService.di.get('decisionServiceDividerLine'),
+      dividerY = divider && divider.waypoint && divider.waypoint.length
+        ? divider.waypoint[0].y
+        : shape.y + Math.round(shape.height * 0.6);
+
+  memberHrefs.forEach(function(href) {
+    var decision = decisionsByHref[href],
+        bounds = decision && decision.di && decision.di.bounds,
+        property = originalProperties[href];
+
+    if (bounds) {
+      property = bounds.y + bounds.height / 2 < dividerY
+        ? 'outputDecision'
+        : 'encapsulatedDecision';
+    }
+
+    if (property === 'outputDecision') {
+      outputHrefs.push(href);
+    } else {
+      encapsulatedHrefs.push(href);
+    }
+  });
+
+  replaceReferences(
+    this._drdFactory,
+    decisionService,
+    'outputDecision',
+    outputHrefs
+  );
+  replaceReferences(
+    this._drdFactory,
+    decisionService,
+    'encapsulatedDecision',
+    encapsulatedHrefs
+  );
+
+  this.updateDecisionServiceInputs(definitions);
+};
+
+DrdUpdater.prototype.getDecisionServiceMembershipSnapshot = function(shape) {
+  if (!shape || !is(shape, 'dmn:DecisionService')) {
+    return null;
+  }
+
+  var decisionService = shape.businessObject;
+
+  return {
+    outputDecision: decisionService.get('outputDecision').map(function(reference) {
+      return reference.href;
+    }),
+    encapsulatedDecision: decisionService.get('encapsulatedDecision').map(function(reference) {
+      return reference.href;
+    })
+  };
+};
+
+DrdUpdater.prototype.restoreDecisionServiceMembershipSnapshot = function(
+    shape,
+    snapshot
+) {
+  if (!shape || !is(shape, 'dmn:DecisionService') || !snapshot) {
+    return;
+  }
+
+  var decisionService = shape.businessObject,
+      definitions = decisionService.$parent;
+
+  if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return;
+  }
+
+  replaceReferences(
+    this._drdFactory,
+    decisionService,
+    'outputDecision',
+    snapshot.outputDecision
+  );
+  replaceReferences(
+    this._drdFactory,
+    decisionService,
+    'encapsulatedDecision',
+    snapshot.encapsulatedDecision
+  );
+
+  this.updateDecisionServiceInputs(definitions);
+};
+
+DrdUpdater.prototype.getDecisionServiceMemberships = function(shape) {
+  if (!shape || !is(shape, 'dmn:Decision')) {
+    return [];
   }
 
   var businessObject = shape.businessObject,
@@ -273,36 +503,102 @@ DrdUpdater.prototype.updateDecisionServiceMembership = function(shape) {
       href = '#' + businessObject.id;
 
   if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return [];
+  }
+
+  return definitions.get('drgElement')
+    .filter(function(drgElement) {
+      return is(drgElement, 'dmn:DecisionService');
+    })
+    .map(function(decisionService) {
+      return {
+        decisionService: decisionService,
+        outputDecision: hasReference(
+          decisionService.get('outputDecision'),
+          href
+        ),
+        encapsulatedDecision: hasReference(
+          decisionService.get('encapsulatedDecision'),
+          href
+        )
+      };
+    });
+};
+
+DrdUpdater.prototype.restoreDecisionServiceMemberships = function(
+    shape,
+    memberships
+) {
+  if (!shape || !is(shape, 'dmn:Decision') || !memberships) {
     return;
   }
 
-  definitions.get('drgElement').forEach(function(drgElement) {
-    if (!is(drgElement, 'dmn:DecisionService')) {
-      return;
+  var businessObject = shape.businessObject,
+      definitions = businessObject.$parent,
+      href = '#' + businessObject.id,
+      drdFactory = this._drdFactory;
+
+  if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return;
+  }
+
+  memberships.forEach(function(membership) {
+    var decisionService = membership.decisionService;
+
+    removeReference(decisionService.get('outputDecision'), href);
+    removeReference(decisionService.get('encapsulatedDecision'), href);
+
+    if (membership.outputDecision) {
+      addReference(drdFactory, decisionService, 'outputDecision', href);
     }
 
-    removeReference(drgElement.get('outputDecision'), href);
-    removeReference(drgElement.get('encapsulatedDecision'), href);
+    if (membership.encapsulatedDecision) {
+      addReference(drdFactory, decisionService, 'encapsulatedDecision', href);
+    }
   });
 
-  var decisionServiceShape = shape.parent;
+  this.updateDecisionServiceInputs(definitions);
+};
 
-  if (is(decisionServiceShape, 'dmn:DecisionService')) {
-    var decisionService = decisionServiceShape.businessObject,
-        divider = decisionService.di.get('decisionServiceDividerLine'),
-        dividerY = divider && divider.waypoint && divider.waypoint.length
+DrdUpdater.prototype.updateDecisionServiceMembership = function(shape, oldParent) {
+  if (!shape || !is(shape, 'dmn:Decision')) {
+    return;
+  }
+
+  var businessObject = shape.businessObject,
+      definitions = businessObject.$parent,
+      href = '#' + businessObject.id,
+      decisionServiceShape = shape.parent,
+      decisionService = is(decisionServiceShape, 'dmn:DecisionService')
+        ? decisionServiceShape.businessObject
+        : null,
+      oldDecisionService = oldParent && is(oldParent, 'dmn:DecisionService')
+        ? oldParent.businessObject
+        : null;
+
+  if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return;
+  }
+
+  if (oldDecisionService && oldDecisionService !== decisionService) {
+    removeReference(oldDecisionService.get('outputDecision'), href);
+    removeReference(oldDecisionService.get('encapsulatedDecision'), href);
+  }
+
+  if (decisionService) {
+    removeReference(decisionService.get('outputDecision'), href);
+    removeReference(decisionService.get('encapsulatedDecision'), href);
+
+    var divider = decisionService.di.get('decisionServiceDividerLine'),
+        currentDividerY = divider && divider.waypoint && divider.waypoint.length
           ? divider.waypoint[0].y
           : decisionServiceShape.y + Math.round(decisionServiceShape.height * 0.6),
         centerY = shape.y + shape.height / 2,
-        property = centerY < dividerY
+        property = centerY < currentDividerY
           ? 'outputDecision'
-          : 'encapsulatedDecision',
-        reference = this._drdFactory.create('dmn:DMNElementReference', {
-          href: href
-        });
+          : 'encapsulatedDecision';
 
-    reference.$parent = decisionService;
-    decisionService.get(property).push(reference);
+    addReference(this._drdFactory, decisionService, property, href);
   }
 
   this.updateDecisionServiceInputs(definitions);
@@ -483,6 +779,21 @@ function addUnique(values, value) {
   }
 }
 
+function addReference(drdFactory, decisionService, property, href) {
+  var reference = drdFactory.create('dmn:DMNElementReference', {
+    href: href
+  });
+
+  reference.$parent = decisionService;
+  decisionService.get(property).push(reference);
+}
+
+function hasReference(references, href) {
+  return references.some(function(reference) {
+    return reference.href === href;
+  });
+}
+
 function removeReference(references, href) {
   for (var index = references.length - 1; index >= 0; index--) {
     if (references[index].href === href) {
@@ -497,11 +808,6 @@ function replaceReferences(drdFactory, decisionService, property, hrefs) {
   references.splice(0, references.length);
 
   hrefs.forEach(function(href) {
-    var reference = drdFactory.create('dmn:DMNElementReference', {
-      href: href
-    });
-
-    reference.$parent = decisionService;
-    references.push(reference);
+    addReference(drdFactory, decisionService, property, href);
   });
 }

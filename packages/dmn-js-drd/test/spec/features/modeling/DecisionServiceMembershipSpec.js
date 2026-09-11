@@ -141,6 +141,78 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
   });
 
 
+  it('should preserve a custom divider position when moving a Decision Service', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const commandStack = activeViewer.get('commandStack');
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 100, y: 200 },
+      { x: 400, y: 200 }
+    ]);
+
+    modeling.moveShape(decisionService, { x: 40, y: 30 });
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 140, y: 230 },
+      { x: 440, y: 230 }
+    ]);
+
+    commandStack.undo();
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 100, y: 200 },
+      { x: 400, y: 200 }
+    ]);
+
+    commandStack.redo();
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 140, y: 230 },
+      { x: 440, y: 230 }
+    ]);
+  });
+
+
+  it('should preserve divider Y when resizing the lower and right edges', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const commandStack = activeViewer.get('commandStack');
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    modeling.resizeShape(decisionService, {
+      x: 100,
+      y: 80,
+      width: 360,
+      height: 300
+    });
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 100, y: 200 },
+      { x: 460, y: 200 }
+    ]);
+
+    commandStack.undo();
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 100, y: 200 },
+      { x: 400, y: 200 }
+    ]);
+
+    commandStack.redo();
+
+    expect(dividerWaypoints(decisionService)).to.eql([
+      { x: 100, y: 200 },
+      { x: 460, y: 200 }
+    ]);
+  });
+
+
   it('should allow resizing a Decision Service', function() {
     const activeViewer = modeler.getActiveViewer();
     const elementRegistry = activeViewer.get('elementRegistry');
@@ -156,4 +228,11 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
 
 function referenceHrefs(businessObject, property) {
   return businessObject.get(property).map(reference => reference.href);
+}
+
+function dividerWaypoints(decisionService) {
+  return decisionService.businessObject.di
+    .get('decisionServiceDividerLine')
+    .waypoint
+    .map(waypoint => ({ x: waypoint.x, y: waypoint.y }));
 }

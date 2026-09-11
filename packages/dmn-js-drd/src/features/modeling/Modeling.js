@@ -7,22 +7,25 @@ import UpdateLabelHandler from '../label-editing/cmd/UpdateLabelHandler.js';
 import UpdatePropertiesHandler from './cmd/UpdatePropertiesHandler.js';
 import UpdateModdlePropertiesHandler from './cmd/UpdateModdlePropertiesHandler.js';
 
+import { clampDecisionServiceDividerY } from './DecisionServiceUtil';
+
 
 /**
  * DMN modeling.
  *
  * @param {Canvas} canvas
- * @param {CommandStack} commandStack
+ * @param {DrdFactory} drdFactory
  * @param {DrdRules} drdRules
- * @param {ElementFactory} elementFactory
- * @param {EventBus} eventBus
+ * @param {Injector} injector
  */
 export default function Modeling(
     canvas,
+    drdFactory,
     drdRules,
     injector
 ) {
   this._canvas = canvas;
+  this._drdFactory = drdFactory;
   this._drdRules = drdRules;
 
   injector.invoke(BaseModeling, this);
@@ -32,6 +35,7 @@ inherits(Modeling, BaseModeling);
 
 Modeling.$inject = [
   'canvas',
+  'drdFactory',
   'drdRules',
   'injector'
 ];
@@ -70,6 +74,32 @@ Modeling.prototype.unclaimId = function(id, moddleElement) {
   this._commandStack.execute('id.updateClaim', {
     id: id,
     element: moddleElement
+  });
+};
+
+/**
+ * Update the vertical position of a Decision Service divider.
+ *
+ * @param {Shape} element
+ * @param {number} dividerY
+ */
+Modeling.prototype.updateDecisionServiceDivider = function(element, dividerY) {
+  var drdFactory = this._drdFactory,
+      divider = element.businessObject.di.get('decisionServiceDividerLine');
+
+  dividerY = clampDecisionServiceDividerY(element, dividerY);
+
+  var waypoints = drdFactory.createDiWaypoints([
+    { x: element.x, y: dividerY },
+    { x: element.x + element.width, y: dividerY }
+  ]);
+
+  waypoints.forEach(function(waypoint) {
+    waypoint.$parent = divider;
+  });
+
+  this.updateModdleProperties(element, divider, {
+    waypoint: waypoints
   });
 };
 
