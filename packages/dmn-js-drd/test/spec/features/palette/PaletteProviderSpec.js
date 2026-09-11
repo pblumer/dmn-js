@@ -43,7 +43,7 @@ describe('features/palette', function() {
     // when
     var paletteElement = domQuery('.djs-palette', canvas._container);
     var entries = domQueryAll('.entry', paletteElement);
-    var decisionServiceEntry = entries.find(function(entry) {
+    var decisionServiceEntry = Array.from(entries).find(function(entry) {
       return entry.title === 'Create decision service';
     });
 
