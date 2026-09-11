@@ -180,7 +180,7 @@ export default function DrdUpdater(
 
   function updateDecisionServiceInputs(context) {
     var connection = context.connection,
-        target = connection && connection.target,
+        target = connection && (connection.target || context.target),
         targetBo = target && target.businessObject,
         definitions = targetBo && targetBo.$parent;
 
