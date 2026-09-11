@@ -291,6 +291,48 @@ export default function DrdRenderer(
 
       return rect;
     },
+    'dmn:DecisionService': function(p, element) {
+      var semantic = getSemantic(element),
+          di = semantic.di,
+          stroke = getStrokeColor(element, defaultStrokeColor),
+          rect = drawRect(p, element.width, element.height, 0, {
+            stroke: stroke,
+            fill: getFillColor(element, defaultFillColor)
+          });
+
+      var divider = di && di.get('decisionServiceDividerLine'),
+          waypoints = divider && divider.get('waypoint');
+
+      if (waypoints && waypoints.length) {
+        drawLine(p, waypoints.map(function(waypoint) {
+          return {
+            x: waypoint.x - element.x,
+            y: waypoint.y - element.y
+          };
+        }), {
+          stroke: stroke
+        });
+      }
+
+      var label = di && di.get('label'),
+          bounds = label && label.get('bounds');
+
+      if (bounds) {
+        renderEmbeddedLabel(p, element, 'center-middle', {
+          box: {
+            x: bounds.x - element.x,
+            y: bounds.y - element.y,
+            width: bounds.width,
+            height: bounds.height
+          },
+          padding: 0
+        });
+      } else {
+        renderEmbeddedLabel(p, element, 'center-middle');
+      }
+
+      return rect;
+    },
     'dmn:KnowledgeSource': function(p, element) {
 
       var pathData = pathMap.getScaledPath('KNOWLEDGE_SOURCE', {

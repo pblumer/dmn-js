@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_DecisionService"
+             name="Decision Service"
+             namespace="https://example.com/dmn15/decision-service">
+  <decisionService id="DecisionService_Approval" name="Approval Service" />
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_DecisionService">
+      <dmndi:DMNShape id="DMNShape_DecisionService_Approval" dmnElementRef="DecisionService_Approval">
+        <dc:Bounds x="100" y="80" width="300" height="200" />
+        <dmndi:DMNLabel>
+          <dc:Bounds x="180" y="120" width="140" height="20" />
+        </dmndi:DMNLabel>
+        <dmndi:DMNDecisionServiceDividerLine>
+          <di:waypoint x="100" y="200" />
+          <di:waypoint x="400" y="200" />
+        </dmndi:DMNDecisionServiceDividerLine>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
