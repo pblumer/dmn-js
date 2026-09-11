@@ -28,6 +28,18 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
   });
 
 
+  it('should allow moving a Decision onto a Decision Service', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const drdRules = activeViewer.get('drdRules');
+    const elementRegistry = activeViewer.get('elementRegistry');
+
+    const decision = elementRegistry.get('Decision_Output');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    expect(drdRules.canMove(decision, decisionService)).to.equal(true);
+  });
+
+
   it('should assign a Decision to outputDecision when moved into the output compartment', function() {
     const activeViewer = modeler.getActiveViewer();
     const elementRegistry = activeViewer.get('elementRegistry');
@@ -36,12 +48,13 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
     const decision = elementRegistry.get('Decision_Output');
     const decisionService = elementRegistry.get('DecisionService_Approval');
 
-    modeling.moveShape(decision, { x: -340, y: 0 });
+    modeling.moveShape(decision, { x: -340, y: 0 }, decisionService);
 
     expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
       '#Decision_Output'
     ]);
     expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([]);
+    expect(decision.parent).to.eql(decisionService);
     expect(decision.businessObject.$parent).to.eql(decisionService.businessObject.$parent);
   });
 
@@ -54,40 +67,46 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
     const decision = elementRegistry.get('Decision_Encapsulated');
     const decisionService = elementRegistry.get('DecisionService_Approval');
 
-    modeling.moveShape(decision, { x: -340, y: -20 });
+    modeling.moveShape(decision, { x: -340, y: -20 }, decisionService);
 
     expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([]);
     expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([
       '#Decision_Encapsulated'
     ]);
+    expect(decision.parent).to.eql(decisionService);
     expect(decision.businessObject.$parent).to.eql(decisionService.businessObject.$parent);
   });
 
 
   it('should undo and redo Decision Service membership with the shape move', function() {
     const activeViewer = modeler.getActiveViewer();
+    const canvas = activeViewer.get('canvas');
     const commandStack = activeViewer.get('commandStack');
     const elementRegistry = activeViewer.get('elementRegistry');
     const modeling = activeViewer.get('modeling');
 
     const decision = elementRegistry.get('Decision_Output');
     const decisionService = elementRegistry.get('DecisionService_Approval');
+    const root = canvas.getRootElement();
 
-    modeling.moveShape(decision, { x: -340, y: 0 });
+    modeling.moveShape(decision, { x: -340, y: 0 }, decisionService);
 
     expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
       '#Decision_Output'
     ]);
+    expect(decision.parent).to.eql(decisionService);
 
     commandStack.undo();
 
     expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([]);
+    expect(decision.parent).to.eql(root);
 
     commandStack.redo();
 
     expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
       '#Decision_Output'
     ]);
+    expect(decision.parent).to.eql(decisionService);
   });
 
 
