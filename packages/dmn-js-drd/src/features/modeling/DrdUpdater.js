@@ -108,6 +108,13 @@ export default function DrdUpdater(
 
   this.reverted([ 'shape.create', 'shape.move', 'shape.resize' ], updateBounds, true);
 
+  function updateDecisionServiceMembership(context) {
+    self.updateDecisionServiceMembership(context.shape);
+  }
+
+  this.executed('shape.move', updateDecisionServiceMembership, true);
+  this.reverted('shape.move', updateDecisionServiceMembership, true);
+
   function updateConnectionWaypoints(context) {
     self.updateConnectionWaypoints(context);
   }
@@ -233,6 +240,51 @@ DrdUpdater.prototype.updateDecisionServiceDivider = function(shape) {
   });
 };
 
+DrdUpdater.prototype.updateDecisionServiceMembership = function(shape) {
+  if (!shape || !is(shape, 'dmn:Decision')) {
+    return;
+  }
+
+  var businessObject = shape.businessObject,
+      definitions = businessObject.$parent,
+      href = '#' + businessObject.id;
+
+  if (!definitions || !is(definitions, 'dmn:Definitions')) {
+    return;
+  }
+
+  definitions.get('drgElement').forEach(function(drgElement) {
+    if (!is(drgElement, 'dmn:DecisionService')) {
+      return;
+    }
+
+    removeReference(drgElement.get('outputDecision'), href);
+    removeReference(drgElement.get('encapsulatedDecision'), href);
+  });
+
+  var decisionServiceShape = shape.parent;
+
+  if (!is(decisionServiceShape, 'dmn:DecisionService')) {
+    return;
+  }
+
+  var decisionService = decisionServiceShape.businessObject,
+      divider = decisionService.di.get('decisionServiceDividerLine'),
+      dividerY = divider && divider.waypoint && divider.waypoint.length
+        ? divider.waypoint[0].y
+        : decisionServiceShape.y + Math.round(decisionServiceShape.height * 0.6),
+      centerY = shape.y + shape.height / 2,
+      property = centerY < dividerY
+        ? 'outputDecision'
+        : 'encapsulatedDecision',
+      reference = this._drdFactory.create('dmn:DMNElementReference', {
+        href: href
+      });
+
+  reference.$parent = decisionService;
+  decisionService.get(property).push(reference);
+};
+
 DrdUpdater.prototype.updateConnectionWaypoints = function(context) {
   var drdFactory = this._drdFactory;
 
@@ -333,3 +385,12 @@ DrdUpdater.prototype.updateDiParent = function(di, parentDi) {
     throw new Error('unsupported');
   }
 };
+
+
+function removeReference(references, href) {
+  for (var index = references.length - 1; index >= 0; index--) {
+    if (references[index].href === href) {
+      references.splice(index, 1);
+    }
+  }
+}
