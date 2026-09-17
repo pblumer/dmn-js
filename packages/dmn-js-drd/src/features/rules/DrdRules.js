@@ -149,6 +149,7 @@ function canCreate(shape, target) {
   return isAny(shape, [
     'dmn:BusinessKnowledgeModel',
     'dmn:Decision',
+    'dmn:DecisionService',
     'dmn:InputData',
     'dmn:KnowledgeSource',
     'dmn:TextAnnotation'
