@@ -6,7 +6,12 @@ import {
 } from '../../../TestHelper';
 
 import coreModule from 'src/core';
+import createModule from 'diagram-js/lib/features/create';
 import modelingModule from 'src/features/modeling';
+
+import {
+  createCanvasEvent as canvasEvent
+} from '../../../util/MockEvents';
 
 var testModules = [ coreModule, modelingModule ];
 
@@ -230,6 +235,123 @@ describe('features/rules', function() {
       }
     ));
 
+
+    it('decision service -> definitions', expectCanCreate(
+      'dmn:DecisionService',
+      'Definitions_1',
+      true
+    ));
+
+  });
+
+
+  describe('create decision service', function() {
+
+    var diagramXML = require('./drd-rules.dmn');
+
+    beforeEach(bootstrapModeler(diagramXML, {
+      modules: testModules.concat(createModule)
+    }));
+
+
+    it('should create on definitions', inject(
+      function(canvas, create, dragging, elementFactory, elementRegistry) {
+
+        // given
+        var decisionService = elementFactory.createShape({
+          type: 'dmn:DecisionService'
+        });
+
+        var root = canvas.getRootElement();
+
+        // when
+        create.start(canvasEvent({ x: 0, y: 0 }), decisionService);
+
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.hover({ element: root });
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.end();
+
+        // then
+        expect(elementRegistry.get(decisionService.id)).to.exist;
+        expect(decisionService.parent).to.equal(root);
+        expect(decisionService.businessObject.$parent)
+          .to.equal(root.businessObject);
+      }
+    ));
+
+
+    it('should lay out divider line', inject(
+      function(canvas, create, dragging, elementFactory) {
+
+        // given
+        var decisionService = elementFactory.createShape({
+          type: 'dmn:DecisionService'
+        });
+
+        var root = canvas.getRootElement();
+
+        // when
+        create.start(canvasEvent({ x: 0, y: 0 }), decisionService);
+
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.hover({ element: root });
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.end();
+
+        // then
+        var divider = decisionService.businessObject.di
+          .get('decisionServiceDividerLine');
+
+        var waypoints = divider && divider.get('waypoint');
+
+        var dividerY = decisionService.y +
+          Math.round(decisionService.height * 0.6);
+
+        expect(waypoints).to.have.lengthOf(2);
+        expect(waypoints[0].x).to.eql(decisionService.x);
+        expect(waypoints[0].y).to.eql(dividerY);
+        expect(waypoints[1].x).to.eql(
+          decisionService.x + decisionService.width
+        );
+        expect(waypoints[1].y).to.eql(dividerY);
+      }
+    ));
+
+
+    it('should not create decision in decision service', inject(
+      function(canvas, create, dragging, elementFactory, elementRegistry) {
+
+        // given
+        var decisionService = elementFactory.createShape({
+          type: 'dmn:DecisionService'
+        });
+
+        var root = canvas.getRootElement();
+
+        create.start(canvasEvent({ x: 0, y: 0 }), decisionService);
+
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.hover({ element: root });
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.end();
+
+        var decision = elementFactory.createShape({ type: 'dmn:Decision' });
+
+        // when
+        create.start(canvasEvent({ x: 0, y: 0 }), decision);
+
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.hover({ element: decisionService });
+        dragging.move(canvasEvent({ x: 700, y: 400 }));
+        dragging.end();
+
+        // then
+        expect(elementRegistry.get(decision.id)).not.to.exist;
+        expect(decisionService.children).to.be.empty;
+      }
+    ));
+
   });
 
 
@@ -294,6 +416,21 @@ function expectCanConnect(source, target, canConnect) {
         elementRegistry.get(source),
         elementRegistry.get(target)
       )).to.eql(canConnect);
+    });
+  };
+}
+
+function expectCanCreate(type, target, canCreate) {
+  return function() {
+    getDrdJS().invoke(function(elementFactory, elementRegistry, rules) {
+      expect(rules.allowed(
+        'shape.create',
+        {
+          position: { x: 0, y: 0 },
+          shape: elementFactory.createShape({ type: type }),
+          target: elementRegistry.get(target)
+        }
+      )).to.equal(canCreate);
     });
   };
 }
