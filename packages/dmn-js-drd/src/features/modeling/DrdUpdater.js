@@ -115,6 +115,13 @@ export default function DrdUpdater(
   this.executed('shape.move', updateDecisionServiceMembership, true);
   this.reverted('shape.move', updateDecisionServiceMembership, true);
 
+  function updateDecisionServiceMemberships(context) {
+    self.updateDecisionServiceMemberships(context.shape);
+  }
+
+  this.executed('shape.resize', updateDecisionServiceMemberships, true);
+  this.reverted('shape.resize', updateDecisionServiceMemberships, true);
+
   function updateConnectionWaypoints(context) {
     self.updateConnectionWaypoints(context);
   }
@@ -306,6 +313,24 @@ DrdUpdater.prototype.updateDecisionServiceMembership = function(shape) {
   }
 
   this.updateDecisionServiceInputs(definitions);
+};
+
+/**
+ * Re-derive the membership of every Decision contained in a Decision Service.
+ *
+ * Resizing a Decision Service moves its divider line, which may leave a
+ * contained Decision on the other side of it.
+ */
+DrdUpdater.prototype.updateDecisionServiceMemberships = function(shape) {
+  var self = this;
+
+  if (!shape || !is(shape, 'dmn:DecisionService')) {
+    return;
+  }
+
+  shape.children.forEach(function(child) {
+    self.updateDecisionServiceMembership(child);
+  });
 };
 
 DrdUpdater.prototype.updateDecisionServiceInputs = function(definitions) {
