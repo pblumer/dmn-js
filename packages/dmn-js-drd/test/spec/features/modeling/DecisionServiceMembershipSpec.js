@@ -141,6 +141,98 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
   });
 
 
+  it('should reassign a Decision when the divider line moves past it on resize', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const decision = elementRegistry.get('Decision_Output');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    modeling.moveShape(decision, { x: -340, y: 0 }, decisionService);
+
+    expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+
+    // when
+    // shrinking moves the divider line to y=128, above the Decision's center
+    modeling.resizeShape(decisionService, {
+      x: 100, y: 80, width: 300, height: 80
+    });
+
+    // then
+    expect(dividerY(decisionService)).to.be.below(decision.y + decision.height / 2);
+
+    expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([]);
+    expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+  });
+
+
+  it('should keep membership when the divider line does not move past a Decision', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const decision = elementRegistry.get('Decision_Output');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    modeling.moveShape(decision, { x: -340, y: 0 }, decisionService);
+
+    // when
+    modeling.resizeShape(decisionService, {
+      x: 100, y: 80, width: 400, height: 240
+    });
+
+    // then
+    expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+    expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([]);
+  });
+
+
+  it('should undo and redo Decision Service membership with the shape resize', function() {
+    const activeViewer = modeler.getActiveViewer();
+    const commandStack = activeViewer.get('commandStack');
+    const elementRegistry = activeViewer.get('elementRegistry');
+    const modeling = activeViewer.get('modeling');
+
+    const decision = elementRegistry.get('Decision_Output');
+    const decisionService = elementRegistry.get('DecisionService_Approval');
+
+    modeling.moveShape(decision, { x: -340, y: 0 }, decisionService);
+
+    modeling.resizeShape(decisionService, {
+      x: 100, y: 80, width: 300, height: 80
+    });
+
+    expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+
+    // when
+    commandStack.undo();
+
+    // then
+    expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+    expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([]);
+
+    // when
+    commandStack.redo();
+
+    // then
+    expect(referenceHrefs(decisionService.businessObject, 'outputDecision')).to.eql([]);
+    expect(referenceHrefs(decisionService.businessObject, 'encapsulatedDecision')).to.eql([
+      '#Decision_Output'
+    ]);
+  });
+
+
   it('should allow resizing a Decision Service', function() {
     const activeViewer = modeler.getActiveViewer();
     const elementRegistry = activeViewer.get('elementRegistry');
@@ -156,4 +248,11 @@ describe('features/modeling - DMN 1.5 Decision Service membership', function() {
 
 function referenceHrefs(businessObject, property) {
   return businessObject.get(property).map(reference => reference.href);
+}
+
+function dividerY(decisionServiceShape) {
+  const divider = decisionServiceShape.businessObject.di
+    .get('decisionServiceDividerLine');
+
+  return divider.get('waypoint')[0].y;
 }
