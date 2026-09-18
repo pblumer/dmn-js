@@ -8,6 +8,7 @@ import AutoScrollModule from 'diagram-js/lib/features/auto-scroll';
 import BendpointsModule from 'diagram-js/lib/features/bendpoints';
 import ContextPadModule from './features/context-pad';
 import ConnectPreviewModule from 'diagram-js/lib/features/connection-preview';
+import DecisionServiceDividerModule from './features/decision-service-divider';
 import DefinitionPropertiesModule from './features/definition-properties/modeler';
 import DistributeElementsModule from './features/distribute-elements';
 import EditorActionsModule from './features/editor-actions';
@@ -43,6 +44,7 @@ import TypeRefDropdownModule from './features/type-ref-dropdown';
  *
  * // logging component
  * function InteractionLogger(eventBus) {
+ *
  *   eventBus.on('element.hover', function(event) {
  *     console.log()
  *   })
@@ -56,7 +58,7 @@ import TypeRefDropdownModule from './features/type-ref-dropdown';
  *   interactionLogger: [ 'type', InteractionLogger ]
  * };
  *
- * // extend the viewer
+ * // extend the viewer pass in extension modules via the `additionalModules` option.
  * var dmnModeler = new Modeler({ additionalModules: [ extensionModule ] });
  * dmnModeler.importXML(...);
  * ```
@@ -88,6 +90,7 @@ import TypeRefDropdownModule from './features/type-ref-dropdown';
  *
  * var dmnModeler = new Modeler({ additionalModules: [ overrideModule ]});
  * ```
+ *
  *
  * @param {Object} [options] configuration options to pass to the viewer
  * @param {DOMElement} [options.container]
@@ -136,6 +139,7 @@ Modeler.prototype._modelingModules = [
   OutlineProvider,
   PaletteModule,
   ResizeModule,
+  DecisionServiceDividerModule,
   SnappingModule,
   TypeRefDropdownModule
 ];

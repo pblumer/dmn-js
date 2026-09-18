@@ -5,6 +5,7 @@ import DiagramCommand from 'diagram-js/lib/command';
 import DiagramSelection from 'diagram-js/lib/features/selection';
 import DiagramChangeSupport from 'diagram-js/lib/features/change-support';
 
+import DecisionServiceBoundsMembershipBehavior from './DecisionServiceBoundsMembershipBehavior';
 import DrdFactory from './DrdFactory';
 import DrdUpdater from './DrdUpdater';
 import ElementFactory from './ElementFactory';
@@ -13,7 +14,11 @@ import DrdLayouter from './DrdLayouter';
 import CroppingConnectionDocking from 'diagram-js/lib/layout/CroppingConnectionDocking';
 
 export default {
-  __init__: [ 'modeling', 'drdUpdater' ],
+  __init__: [
+    'modeling',
+    'drdUpdater',
+    'decisionServiceBoundsMembershipBehavior'
+  ],
   __depends__: [
     ModelingBehavior,
     Rules,
@@ -21,6 +26,9 @@ export default {
     DiagramCommand,
     DiagramSelection,
     DiagramChangeSupport
+  ],
+  decisionServiceBoundsMembershipBehavior: [
+    'type', DecisionServiceBoundsMembershipBehavior
   ],
   drdFactory: [ 'type', DrdFactory ],
   drdUpdater: [ 'type', DrdUpdater ],
