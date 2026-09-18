@@ -87,7 +87,8 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
       'dmn:Decision', 'drd', 'dmn-icon-decision', translate('Create decision')
     ),
     'create.decision-service': createAction(
-      'dmn:DecisionService', 'drd', 'dmn-icon-decision', translate('Create decision service')
+      'dmn:DecisionService', 'drd', 'dmn-icon-decision-service',
+      translate('Create decision service')
     ),
     'create.input-data': createAction(
       'dmn:InputData', 'drd', 'dmn-icon-input-data', translate('Create input data')
