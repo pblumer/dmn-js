@@ -52,6 +52,29 @@ describe('features/palette', function() {
   }));
 
 
+  it('should provide a distinct icon for each palette entry', inject(
+    function(canvas) {
+
+      // when
+      var paletteElement = domQuery('.djs-palette', canvas._container);
+      var entries = domQueryAll('.entry', paletteElement);
+
+      var icons = Array.from(entries).map(function(entry) {
+        return Array.from(entry.classList).find(function(className) {
+          return className.indexOf('dmn-icon-') === 0;
+        });
+      });
+
+      // then
+      icons.forEach(function(icon) {
+        expect(icon).to.exist;
+      });
+
+      expect(new Set(icons)).to.have.property('size', icons.length);
+    }
+  ));
+
+
   it('should provide title for each palette entry', inject(function(canvas) {
 
     // when
