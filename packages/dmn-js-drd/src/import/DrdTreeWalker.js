@@ -95,8 +95,27 @@ export default function DRDTreeWalker(handler, options) {
     handleDeferred();
   }
 
+  /**
+   * Visit DRG elements, Decision Services first.
+   *
+   * A Decision a service contains is imported as that service's child, so the
+   * service has to be on the canvas before its members ask for it as a parent.
+   * Document order does not guarantee that - a service is commonly written last -
+   * so the two passes do.
+   */
   function handleDrgElements(elements) {
+    var decisionServices = [],
+        rest = [];
+
     forEach(elements, function(element) {
+      if (is(element, 'dmn:DecisionService')) {
+        decisionServices.push(element);
+      } else {
+        rest.push(element);
+      }
+    });
+
+    forEach(decisionServices.concat(rest), function(element) {
       visitIfDi(element);
 
       handleRequirements(element);
