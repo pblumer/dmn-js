@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_DecisionServiceContainment"
+             name="Decision Service Containment"
+             namespace="https://example.com/dmn15/decision-service-containment">
+  <decision id="Decision_Output" name="Output Decision">
+    <informationRequirement id="InformationRequirement_Output">
+      <requiredDecision href="#Decision_Encapsulated" />
+    </informationRequirement>
+  </decision>
+  <decision id="Decision_Encapsulated" name="Encapsulated Decision">
+    <informationRequirement id="InformationRequirement_Encapsulated">
+      <requiredDecision href="#Decision_Boundary" />
+    </informationRequirement>
+  </decision>
+  <decision id="Decision_Boundary" name="Boundary Decision" />
+  <decision id="Decision_Unrelated" name="Unrelated Decision" />
+  <decisionService id="DecisionService_Approval" name="Approval Service">
+    <outputDecision href="#Decision_Output" />
+    <encapsulatedDecision href="#Decision_Encapsulated" />
+    <inputDecision href="#Decision_Boundary" />
+  </decisionService>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_DecisionServiceContainment">
+      <dmndi:DMNShape id="DMNShape_DecisionService_Approval" dmnElementRef="DecisionService_Approval">
+        <dc:Bounds x="100" y="80" width="300" height="240" />
+        <dmndi:DMNDecisionServiceDividerLine>
+          <di:waypoint x="100" y="200" />
+          <di:waypoint x="400" y="200" />
+        </dmndi:DMNDecisionServiceDividerLine>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Output" dmnElementRef="Decision_Output">
+        <dc:Bounds x="120" y="100" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Boundary" dmnElementRef="Decision_Boundary">
+        <dc:Bounds x="260" y="100" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Encapsulated" dmnElementRef="Decision_Encapsulated">
+        <dc:Bounds x="120" y="220" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Unrelated" dmnElementRef="Decision_Unrelated">
+        <dc:Bounds x="260" y="220" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_InformationRequirement_Output" dmnElementRef="InformationRequirement_Output">
+        <di:waypoint x="180" y="220" />
+        <di:waypoint x="180" y="150" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_InformationRequirement_Encapsulated" dmnElementRef="InformationRequirement_Encapsulated">
+        <di:waypoint x="320" y="150" />
+        <di:waypoint x="240" y="220" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

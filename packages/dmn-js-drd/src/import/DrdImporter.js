@@ -7,6 +7,10 @@ import {
   is
 } from 'dmn-js-shared/lib/util/ModelUtil';
 
+import {
+  getContainingDecisionService
+} from '../util/DecisionServiceMembership';
+
 
 export default function DrdImporter(
     eventBus,
@@ -59,7 +63,7 @@ DrdImporter.prototype.add = function(semantic) {
 
     element = elementFactory.createShape(elementDefinition);
 
-    canvas.addShape(element);
+    canvas.addShape(element, this._getParent(semantic));
 
     eventBus.fire('drdElement.added', { element: element, di: di });
 
@@ -89,6 +93,25 @@ DrdImporter.prototype.add = function(semantic) {
   }
 
   return element;
+};
+
+/**
+ * The shape this element is drawn inside of, if any.
+ *
+ * Only a Decision inside a Decision Service has one. Giving it that parent makes
+ * the container real to diagram-js rather than a rectangle that happens to be
+ * there: the box is painted beneath what it holds instead of over it, moving the
+ * service carries its members, and DrdUpdater - which already reads
+ * `shape.parent` to classify a member - sees the membership the document
+ * declares instead of having to infer it from geometry on the first edit.
+ *
+ * Decision Services are imported before every other DRG element, so the parent
+ * is in the registry by the time a member asks for it.
+ */
+DrdImporter.prototype._getParent = function(semantic) {
+  var decisionService = getContainingDecisionService(semantic);
+
+  return decisionService && this._getShape(decisionService.id);
 };
 
 DrdImporter.prototype._getSource = function(semantic) {

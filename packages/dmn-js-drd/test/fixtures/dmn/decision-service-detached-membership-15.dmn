@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_DetachedDecisionServiceMembership"
+             name="Detached Decision Service Membership"
+             namespace="https://example.com/dmn15/detached-decision-service-membership">
+  <decision id="Decision_Detached" name="Detached Decision" />
+  <decisionService id="DecisionService_Approval" name="Approval Service">
+    <outputDecision href="#Decision_Detached" />
+  </decisionService>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_DetachedDecisionServiceMembership">
+      <dmndi:DMNShape id="DMNShape_DecisionService_Approval" dmnElementRef="DecisionService_Approval">
+        <dc:Bounds x="100" y="80" width="300" height="240" />
+        <dmndi:DMNDecisionServiceDividerLine>
+          <di:waypoint x="100" y="200" />
+          <di:waypoint x="400" y="200" />
+        </dmndi:DMNDecisionServiceDividerLine>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Detached" dmnElementRef="Decision_Detached">
+        <dc:Bounds x="500" y="100" width="180" height="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
