@@ -461,7 +461,11 @@ export default function DrdRenderer(
     },
     'dmn:InputData': function(p, element) {
 
-      var rect = drawRect(p, element.width, element.height, 22, {
+      // An input datum is a stadium: the ends are fully rounded, which is half the
+      // height and not a radius that merely looks like it at the default size
+      // (DMN 1.5 Table 5-2). A fixed radius draws an imported datum of any other
+      // height as a rounded rectangle, which is the decision service's shape.
+      var rect = drawRect(p, element.width, element.height, element.height / 2, {
         stroke: getStrokeColor(element, defaultStrokeColor),
         fill: getFillColor(element, defaultFillColor)
       });
