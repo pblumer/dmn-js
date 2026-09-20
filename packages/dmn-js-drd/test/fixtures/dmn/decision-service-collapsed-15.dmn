@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="Definitions_CollapsedDecisionService"
+             name="Collapsed Decision Service"
+             namespace="https://example.com/dmn15/collapsed-decision-service">
+  <decision id="Decision_Output" name="Output Decision" />
+  <decisionService id="DecisionService_Approval" name="Approval Service">
+    <outputDecision href="#Decision_Output" />
+  </decisionService>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_CollapsedDecisionService">
+      <dmndi:DMNShape id="DMNShape_DecisionService_Approval" dmnElementRef="DecisionService_Approval" isCollapsed="true">
+        <dc:Bounds x="100" y="80" width="300" height="240" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Output" dmnElementRef="Decision_Output">
+        <dc:Bounds x="140" y="100" width="180" height="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

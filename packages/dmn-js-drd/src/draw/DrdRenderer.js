@@ -263,6 +263,56 @@ export default function DrdRenderer(
     return renderLabel(p, name, options);
   }
 
+  // A decision service is drawn as a ROUNDED rectangle, and a decision as a plain
+  // one (DMN 1.5 §5.3.3, Figure 5-10). The corner is not decoration: it is the only
+  // thing telling the two apart at a glance, so it belongs with the shape rather
+  // than with a stylesheet.
+  var DECISION_SERVICE_RADIUS = 20;
+
+  // Enough to keep the name clear of the rounded corner it now sits next to.
+  var DECISION_SERVICE_PADDING = 10;
+
+  // The collapsed marker: a square with a plus in it, centred under the name, and
+  // the room the name gives up for it (DMN 1.5 Table 5-2).
+  var COLLAPSED_MARKER_SIZE = 16;
+  var COLLAPSED_MARKER_MARGIN = 12;
+  var COLLAPSED_MARKER_ROOM =
+    (COLLAPSED_MARKER_SIZE + COLLAPSED_MARKER_MARGIN) * 2;
+
+  /**
+   * Draw the marker that says a decision service has its decisions folded away.
+   */
+  function drawCollapsedMarker(p, element, stroke) {
+    var size = COLLAPSED_MARKER_SIZE,
+        x = Math.round((element.width - size) / 2),
+        y = Math.round(element.height - COLLAPSED_MARKER_MARGIN - size),
+        mid = Math.round(size / 2);
+
+    var marker = svgCreate('rect');
+
+    svgAttr(marker, {
+      x: x,
+      y: y,
+      width: size,
+      height: size,
+      fill: 'none',
+      stroke: stroke,
+      strokeWidth: 1.5
+    });
+
+    svgAppend(p, marker);
+
+    drawPath(p, [
+      'M', x + 4, y + mid, 'L', x + size - 4, y + mid,
+      'M', x + mid, y + 4, 'L', x + mid, y + size - 4
+    ].join(' '), {
+      stroke: stroke,
+      strokeWidth: 1.5
+    });
+
+    return marker;
+  }
+
   function drawPath(p, d, attrs) {
 
     attrs = computeStyle(attrs, [ 'no-fill' ], {
@@ -295,10 +345,52 @@ export default function DrdRenderer(
       var semantic = getSemantic(element),
           di = semantic.di,
           stroke = getStrokeColor(element, defaultStrokeColor),
-          rect = drawRect(p, element.width, element.height, 0, {
-            stroke: stroke,
-            fill: getFillColor(element, defaultFillColor)
+          rect = drawRect(
+            p, element.width, element.height, DECISION_SERVICE_RADIUS, {
+              stroke: stroke,
+              fill: getFillColor(element, defaultFillColor)
+            }
+          );
+
+      var label = di && di.get('label'),
+          bounds = label && label.get('bounds');
+
+      // A DMNDI label says where the author put the name; it outranks either
+      // default below.
+      function renderName(align, box) {
+        if (bounds) {
+          return renderEmbeddedLabel(p, element, 'center-middle', {
+            box: {
+              x: bounds.x - element.x,
+              y: bounds.y - element.y,
+              width: bounds.width,
+              height: bounds.height
+            },
+            padding: 0
           });
+        }
+
+        return renderEmbeddedLabel(p, element, align, box);
+      }
+
+      // Collapsed: the decisions are hidden, so there is no divider and no
+      // compartment to keep clear of. The name is centred above the marker that
+      // says something is folded away (DMN 1.5 Table 5-2).
+      if (di && di.get('isCollapsed')) {
+        renderName('center-middle', {
+          box: {
+            x: 0,
+            y: 0,
+            width: element.width,
+            height: Math.max(element.height - COLLAPSED_MARKER_ROOM, 0)
+          },
+          padding: DECISION_SERVICE_PADDING
+        });
+
+        drawCollapsedMarker(p, element, stroke);
+
+        return rect;
+      }
 
       var divider = di && di.get('decisionServiceDividerLine'),
           waypoints = divider && divider.get('waypoint');
@@ -314,22 +406,10 @@ export default function DrdRenderer(
         });
       }
 
-      var label = di && di.get('label'),
-          bounds = label && label.get('bounds');
-
-      if (bounds) {
-        renderEmbeddedLabel(p, element, 'center-middle', {
-          box: {
-            x: bounds.x - element.x,
-            y: bounds.y - element.y,
-            width: bounds.width,
-            height: bounds.height
-          },
-          padding: 0
-        });
-      } else {
-        renderEmbeddedLabel(p, element, 'center-middle');
-      }
+      // Expanded: the name goes in the top right of the box, out of the way of the
+      // output decisions the upper compartment holds (DMN 1.5 Figure 5-10). The
+      // padding clears the rounded corner.
+      renderName('right-top', { padding: DECISION_SERVICE_PADDING });
 
       return rect;
     },
