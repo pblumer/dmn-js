@@ -172,10 +172,15 @@ function canMove(elements, target) {
     return true;
   }
 
+  // A decision service is laid out like anything else on the canvas, and a diagram
+  // with several of them is exactly where that matters. Its decisions are its
+  // children, so they travel with it; only the diagram itself can hold it, which is
+  // why a service dropped on another service still falls through to false below.
   if (every(elements, function(element) {
     return isAny(element, [
       'dmn:BusinessKnowledgeModel',
       'dmn:Decision',
+      'dmn:DecisionService',
       'dmn:InputData',
       'dmn:KnowledgeSource',
       'dmn:TextAnnotation',

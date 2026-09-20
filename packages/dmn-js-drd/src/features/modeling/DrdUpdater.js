@@ -363,7 +363,17 @@ DrdUpdater.prototype.updateDecisionServiceDivider = function(
     return waypoint;
   });
 
-  this.reclassifyDecisionServiceMemberships(shape);
+  // Moving the whole box changes nothing about which compartment a decision is in:
+  // the decisions travel with it, and the divider has just travelled with it too.
+  // Asking the question anyway answers it wrongly for a member the diagram draws
+  // OUTSIDE the box, which an imported one may well be: that decision did not move
+  // and the divider did, so dragging the box past it turns an output decision into an
+  // encapsulated one and the service silently loses the interface it publishes.
+  // Reclassification belongs to a resize, to a divider drag, and to a decision moved
+  // in or out — each of which really does change what sits where.
+  if (!isTranslation(previousBounds, shape)) {
+    this.reclassifyDecisionServiceMemberships(shape);
+  }
 };
 
 DrdUpdater.prototype.reclassifyDecisionServiceMemberships = function(shape) {
@@ -772,6 +782,21 @@ DrdUpdater.prototype.updateDiParent = function(di, parentDi) {
   }
 };
 
+
+/**
+ * Whether a bounds change moved a shape without resizing it.
+ *
+ * @param {Object} [previousBounds]
+ * @param {djs.model.Shape} shape
+ *
+ * @returns {boolean}
+ */
+function isTranslation(previousBounds, shape) {
+  return !!previousBounds &&
+    previousBounds.width === shape.width &&
+    previousBounds.height === shape.height &&
+    (previousBounds.x !== shape.x || previousBounds.y !== shape.y);
+}
 
 function addUnique(values, value) {
   if (values.indexOf(value) === -1) {

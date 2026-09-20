@@ -102,13 +102,23 @@ describe('draw - DRD notation', function() {
         // Two corners square, two not, on a diagonal - no other element in the table
         // has that signature, so the pairing is what identifies it. Whether the two
         // are cut straight or rounded is a finer point this does not judge.
-        expect(shape) {
+        //
+        // The sides are the second half of it: what is drawn is still a rectangle,
+        // with two corners taken off. Slanting both whole sides instead satisfies the
+        // corners alone and draws a parallelogram, which is not a shape the notation
+        // has.
+        expect(shape, element) {
           const [ topLeft, topRight, bottomRight, bottomLeft ] = cornerRadii(shape);
 
           expect(topLeft).to.be.above(4);
           expect(bottomRight).to.be.above(4);
           expect(topRight).to.be.below(1);
           expect(bottomLeft).to.be.below(1);
+
+          const { left, right } = sideRuns(shape);
+
+          expect(left).to.be.above(element.height * 0.5);
+          expect(right).to.be.above(element.height * 0.5);
         }
       },
       {
@@ -293,6 +303,27 @@ function cornerRadii(shape) {
 
     return gap / (Math.sqrt(2) - 1);
   });
+}
+
+/**
+ * The straight run the drawn edge keeps on the left and on the right side.
+ *
+ * This is what tells a rectangle with its corners taken off from a box sheared into
+ * a parallelogram: the first keeps most of both sides, the second keeps none of
+ * either.
+ */
+function sideRuns(shape) {
+  const bounds = shape.getBBox(),
+        points = sample(shape),
+        run = (x) => {
+          const ys = points
+            .filter(point => Math.abs(point.x - x) < 0.5)
+            .map(point => point.y);
+
+          return ys.length ? Math.max(...ys) - Math.min(...ys) : 0;
+        };
+
+  return { left: run(bounds.x), right: run(bounds.x + bounds.width) };
 }
 
 /**
