@@ -38,6 +38,9 @@ export function getDecisionServiceMemberHrefs(decisionService) {
  * Where services overlap, the smallest containing one wins: that is the box a
  * reader sees the Decision sitting in.
  *
+ * A collapsed service holds nothing on the canvas: its decisions are folded away
+ * (DMN 1.5 Table 5-2), so nothing nests inside it.
+ *
  * @param {ModdleElement} decision
  *
  * @return {ModdleElement|null}
@@ -60,7 +63,8 @@ export function getContainingDecisionService(decision) {
   definitions.get('drgElement').forEach(function(drgElement) {
     if (!is(drgElement, 'dmn:DecisionService') ||
         !drgElement.di ||
-        !drgElement.di.bounds) {
+        !drgElement.di.bounds ||
+        drgElement.di.get('isCollapsed')) {
       return;
     }
 
