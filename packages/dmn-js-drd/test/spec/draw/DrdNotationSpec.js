@@ -5,6 +5,7 @@ import TestContainer from 'mocha-test-container-support';
 import DrdModeler from '../../helper/DrdModeler';
 
 import notationXML from '../../fixtures/dmn/drd-notation-15.dmn';
+import labelOverrideXML from '../../fixtures/dmn/drd-label-override-15.dmn';
 
 
 /**
@@ -32,17 +33,25 @@ describe('draw - DRD notation', function() {
 
   let modeler, viewer;
 
-  beforeEach(async function() {
+  async function open(xml) {
+    modeler && modeler.destroy();
+
     modeler = new DrdModeler({
       container: TestContainer.get(this),
       dmnVersion: '1.5'
     });
 
-    const { warnings } = await modeler.importXML(notationXML);
+    const { warnings } = await modeler.importXML(xml);
 
     expect(warnings.map(warning => warning.message).join('\n')).to.eql('');
 
     viewer = modeler.getActiveViewer();
+
+    return viewer;
+  }
+
+  beforeEach(async function() {
+    await open.call(this, notationXML);
   });
 
   afterEach(function() {
@@ -165,6 +174,86 @@ describe('draw - DRD notation', function() {
 
     });
 
+    it('should draw a Decision Service with a heavier border than a Decision',
+      function() {
+
+        // when
+        const service = parseFloat(
+          styleOf(outlineOf(viewer, 'DecisionService_Approval'), 'stroke-width')
+        );
+        const decision = parseFloat(
+          styleOf(outlineOf(viewer, 'Decision_Standalone'), 'stroke-width')
+        );
+
+        // then
+        // "a heavy solid border", against the "normally drawn with solid lines" every
+        // other element gets (DMN 1.5 6.2.5, 6.2.1). Heavy is said relative to them,
+        // so what is held here is the comparison and not a number of pixels.
+        expect(service).to.be.above(decision);
+      });
+
+  });
+
+
+  describe('names', function() {
+
+    // A DMNDI label may carry text of its own, and where it does the specification
+    // says that text MUST be displayed instead of the element's name (DMN 1.5 6.2.1
+    // and 6.2.5). It is how one diagram says a thing differently from how the model
+    // names it - a shorter name where the box is small, a reader's wording over an
+    // identifier - and a renderer that ignores it draws a name its author replaced
+    // on purpose.
+    const NAMES = [
+      {
+        element: 'a Decision',
+        id: 'Decision_Plain',
+        named: 'Plain Decision',
+        drawn: 'Decision as drawn'
+      },
+      {
+        element: 'an Input Data',
+        id: 'InputData_Amount',
+        named: 'Amount',
+        drawn: 'Input as drawn'
+      },
+      {
+        element: 'a Business Knowledge Model',
+        id: 'BKM_Instalment',
+        named: 'Instalment',
+        drawn: 'Knowledge as drawn'
+      },
+      {
+        element: 'a Knowledge Source',
+        id: 'KnowledgeSource_Policy',
+        named: 'Lending Policy',
+        drawn: 'Source as drawn'
+      },
+      {
+        element: 'a Decision Service',
+        id: 'DecisionService_Rating',
+        named: 'Rating Service',
+        drawn: 'Service as drawn'
+      }
+    ];
+
+    NAMES.forEach(function(row) {
+
+      it('should draw ' + row.element + ' under the name its diagram gives it',
+        async function() {
+
+          // given
+          await open.call(this, labelOverrideXML);
+
+          // when
+          const drawn = textOf(viewer, row.id);
+
+          // then
+          expect(drawn).to.eql(row.drawn);
+          expect(drawn).not.to.eql(row.named);
+        });
+
+    });
+
   });
 
 
@@ -245,6 +334,20 @@ function strokedShapes(viewer, id) {
 
   return Array.from(visual.querySelectorAll('rect, path, polygon, polyline'))
     .filter(shape => styleOf(shape, 'stroke') !== 'none');
+}
+
+/**
+ * The text drawn inside an element, with the line breaks the renderer put in taken
+ * back out.
+ */
+function textOf(viewer, id) {
+  const label = viewer.get('elementRegistry').getGraphics(id)
+    .querySelector('.djs-label');
+
+  const lines = Array.from(label.querySelectorAll('tspan'));
+
+  return (lines.length ? lines.map(line => line.textContent).join(' ')
+    : label.textContent).replace(/\s+/g, ' ').trim();
 }
 
 /**
