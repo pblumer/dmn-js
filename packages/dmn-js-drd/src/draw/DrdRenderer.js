@@ -249,7 +249,7 @@ export default function DrdRenderer(
   }
 
   function renderEmbeddedLabel(p, element, align, options) {
-    var name = getName(element);
+    var name = getDisplayName(element);
 
     options = assign({
       box: element,
@@ -268,6 +268,12 @@ export default function DrdRenderer(
   // thing telling the two apart at a glance, so it belongs with the shape rather
   // than with a stylesheet.
   var DECISION_SERVICE_RADIUS = 20;
+
+  // "drawn with a heavy solid border" (DMN 1.5 6.2.5), against the "normally drawn
+  // with solid lines" every other element gets. Heavy is stated relative to them, so
+  // what matters is that it is visibly the heavier of the two; this is twice the
+  // stroke the rest of the diagram carries.
+  var DECISION_SERVICE_STROKE_WIDTH = 4;
 
   // Enough to keep the name clear of the rounded corner it now sits next to.
   var DECISION_SERVICE_PADDING = 10;
@@ -348,6 +354,7 @@ export default function DrdRenderer(
           rect = drawRect(
             p, element.width, element.height, DECISION_SERVICE_RADIUS, {
               stroke: stroke,
+              strokeWidth: DECISION_SERVICE_STROKE_WIDTH,
               fill: getFillColor(element, defaultFillColor)
             }
           );
@@ -461,7 +468,11 @@ export default function DrdRenderer(
     },
     'dmn:InputData': function(p, element) {
 
-      var rect = drawRect(p, element.width, element.height, 22, {
+      // An input datum is a stadium: the ends are fully rounded, which is half the
+      // height and not a radius that merely looks like it at the default size
+      // (DMN 1.5 Table 5-2). A fixed radius draws an imported datum of any other
+      // height as a rounded rectangle, which is the decision service's shape.
+      var rect = drawRect(p, element.width, element.height, element.height / 2, {
         stroke: getStrokeColor(element, defaultStrokeColor),
         fill: getFillColor(element, defaultFillColor)
       });
@@ -641,6 +652,29 @@ DrdRenderer.$inject = [
 
 function getSemantic(element) {
   return element.businessObject;
+}
+
+/**
+ * The name a DRD element is drawn under.
+ *
+ * A DMNDI label may carry text of its own, and where it does the specification says
+ * that text MUST be displayed instead of the element's name - for a decision, a
+ * business knowledge model, an input datum, a knowledge source and a decision service
+ * alike (DMN 1.5 6.2.1 and 6.2.5). It is how a diagram says a thing differently from
+ * how the model names it, and a renderer that ignores it silently draws a name the
+ * author replaced on purpose.
+ */
+function getDisplayName(element) {
+  var di = getSemantic(element).di,
+      label = di && di.get && di.get('label'),
+      text = label && label.get('text');
+
+  // DMNDI wraps the text in an element of its own, whose body carries the string.
+  if (text && typeof text !== 'string') {
+    text = text.get('text');
+  }
+
+  return text || getName(element);
 }
 
 function colorEscape(str) {

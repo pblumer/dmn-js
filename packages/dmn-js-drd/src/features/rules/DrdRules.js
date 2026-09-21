@@ -8,6 +8,10 @@ import inherits from 'inherits-browser';
 import RuleProvider from 'diagram-js/lib/features/rules/RuleProvider';
 
 import {
+  getDecisionServiceMemberHrefs
+} from '../../util/DecisionServiceMembership';
+
+import {
   every,
   isArray
 } from 'min-dash';
@@ -100,6 +104,25 @@ function canConnect(source, target) {
     return { type: 'dmn:KnowledgeRequirement' };
   }
 
+  // A decision service is an invocable, exactly as a business knowledge model is, so
+  // a decision invokes one through a knowledge requirement - that is what DMN's
+  // KnowledgeRequirement#requiredKnowledge points at. A model that already says so
+  // imports and draws here; only drawing one was refused.
+  if (is(source, 'dmn:DecisionService') &&
+      isAny(target, [
+        'dmn:BusinessKnowledgeModel',
+        'dmn:Decision'
+      ])) {
+
+    // ...but not one of the service's own decisions. That is the service invoking
+    // itself, and no position on the canvas makes it mean anything else.
+    if (isDecisionServiceMember(source, target)) {
+      return false;
+    }
+
+    return { type: 'dmn:KnowledgeRequirement' };
+  }
+
   if (is(source, 'dmn:Decision')) {
 
     if (is(target, 'dmn:Decision')) {
@@ -172,10 +195,15 @@ function canMove(elements, target) {
     return true;
   }
 
+  // A decision service is laid out like anything else on the canvas, and a diagram
+  // with several of them is exactly where that matters. Its decisions are its
+  // children, so they travel with it; only the diagram itself can hold it, which is
+  // why a service dropped on another service still falls through to false below.
   if (every(elements, function(element) {
     return isAny(element, [
       'dmn:BusinessKnowledgeModel',
       'dmn:Decision',
+      'dmn:DecisionService',
       'dmn:InputData',
       'dmn:KnowledgeSource',
       'dmn:TextAnnotation',
@@ -189,6 +217,26 @@ function canMove(elements, target) {
   }
 
   return false;
+}
+
+/**
+ * Whether a Decision is one a Decision Service publishes or evaluates internally.
+ *
+ * Read off the references rather than off the canvas, because a service may name a
+ * decision it does not draw around.
+ *
+ * @param {djs.model.Shape} decisionService
+ * @param {djs.model.Shape} decision
+ *
+ * @returns {boolean}
+ */
+function isDecisionServiceMember(decisionService, decision) {
+  if (!is(decision, 'dmn:Decision')) {
+    return false;
+  }
+
+  return getDecisionServiceMemberHrefs(decisionService.businessObject)
+    .indexOf('#' + decision.businessObject.id) !== -1;
 }
 
 export function isLabel(element) {
