@@ -14,7 +14,10 @@ import {
 
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
 
-import { clampDecisionServiceDividerY } from './DecisionServiceUtil';
+import {
+  clampDecisionServiceDividerY,
+  isDecisionServiceCollapsed
+} from './DecisionServiceUtil';
 
 
 /**
@@ -378,6 +381,21 @@ DrdUpdater.prototype.updateDecisionServiceDivider = function(
 
 DrdUpdater.prototype.reclassifyDecisionServiceMemberships = function(shape) {
   if (!shape || !is(shape, 'dmn:DecisionService')) {
+    return;
+  }
+
+  // A collapsed service draws nothing of its definition (DMN 1.5 §6.2.4): there is
+  // no box for a decision to sit in and no divider for it to sit above or below, so
+  // the geometry cannot say which compartment anything belongs to. Asking it anyway
+  // reads every member off a box that is not the one they were placed in — and the
+  // answer is the failure this whole area exists to prevent: the classification below
+  // is purely `is the decision above the divider`, so against a small collapsed box
+  // every output decision becomes an encapsulated one and the service is left
+  // publishing nothing.
+  //
+  // getContainingDecisionService already refuses to nest into a collapsed service for
+  // the same reason. This is the other direction of that one rule.
+  if (isDecisionServiceCollapsed(shape)) {
     return;
   }
 
