@@ -13,6 +13,10 @@ import {
   hasPrimaryModifier
 } from 'diagram-js/lib/util/Mouse';
 
+import {
+  isDecisionServiceCollapsed
+} from '../modeling/DecisionServiceUtil';
+
 
 /**
 * A provider for DMN elements context pad
@@ -209,6 +213,31 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
         'dmn-icon-input-data',
         translate('Append input data')
       )
+    });
+  }
+
+  if (is(businessObject, 'dmn:DecisionService')) {
+
+    // Fold the service's definition away, or unfold it again (DMN 1.5 §6.2.4). A
+    // diagram carrying several services is unreadable with every decision in every
+    // one of them on screen, and the specification's own answer is a view that
+    // leaves them out rather than a smaller model — the decisions stay in the DRG
+    // and stay editable through the view list.
+    var collapsed = isDecisionServiceCollapsed(element);
+
+    assign(actions, {
+      'decision-service.collapse': {
+        group: 'edit',
+        className: collapsed ? 'dmn-icon-plus' : 'dmn-icon-minus',
+        title: collapsed
+          ? translate('Expand decision service')
+          : translate('Collapse decision service'),
+        action: {
+          click: function(event, element) {
+            modeling.collapseDecisionService(element, !collapsed);
+          }
+        }
+      }
     });
   }
 
