@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A Decision Service whose members are required from outside and require from
+  outside: the two directions a fold has to keep, plus one requirement wholly
+  inside it, which a fold takes away with its decisions.
+
+    InputData_Amount ──▶ Decision_Afford   (encapsulated)   crossing, member is target
+    Decision_Score   ──▶ Decision_Verdict  (output)         crossing, member is target
+    Decision_Afford  ──▶ Decision_Verdict                   internal
+    Decision_Verdict ──▶ Decision_Report   (outside)        crossing, member is source
+-->
+<definitions xmlns="https://www.omg.org/spec/DMN/20230324/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             id="Definitions_DecisionServiceCrossing"
+             name="Decision Service Crossing"
+             namespace="https://example.com/dmn15/decision-service-crossing">
+  <inputData id="InputData_Amount" name="amount" />
+  <decision id="Decision_Afford" name="Affordability">
+    <informationRequirement id="IR_Amount">
+      <requiredInput href="#InputData_Amount" />
+    </informationRequirement>
+  </decision>
+  <decision id="Decision_Verdict" name="Verdict">
+    <informationRequirement id="IR_Afford">
+      <requiredDecision href="#Decision_Afford" />
+    </informationRequirement>
+    <informationRequirement id="IR_Score">
+      <requiredDecision href="#Decision_Score" />
+    </informationRequirement>
+  </decision>
+  <decision id="Decision_Score" name="Score" />
+  <decision id="Decision_Report" name="Report">
+    <informationRequirement id="IR_Report">
+      <requiredDecision href="#Decision_Verdict" />
+    </informationRequirement>
+  </decision>
+  <decisionService id="DecisionService_Credit" name="Credit Service">
+    <outputDecision href="#Decision_Verdict" />
+    <encapsulatedDecision href="#Decision_Afford" />
+  </decisionService>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_DecisionServiceCrossing">
+      <dmndi:DMNShape id="DMNShape_DecisionService_Credit" dmnElementRef="DecisionService_Credit">
+        <dc:Bounds x="100" y="80" width="360" height="300" />
+        <dmndi:DMNDecisionServiceDividerLine>
+          <di:waypoint x="100" y="240" />
+          <di:waypoint x="460" y="240" />
+        </dmndi:DMNDecisionServiceDividerLine>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Verdict" dmnElementRef="Decision_Verdict">
+        <dc:Bounds x="140" y="110" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Afford" dmnElementRef="Decision_Afford">
+        <dc:Bounds x="140" y="270" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Score" dmnElementRef="Decision_Score">
+        <dc:Bounds x="560" y="110" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_Decision_Report" dmnElementRef="Decision_Report">
+        <dc:Bounds x="560" y="270" width="120" height="50" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_InputData_Amount" dmnElementRef="InputData_Amount">
+        <dc:Bounds x="140" y="440" width="125" height="45" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_IR_Amount" dmnElementRef="IR_Amount">
+        <di:waypoint x="202" y="440" />
+        <di:waypoint x="202" y="320" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_IR_Afford" dmnElementRef="IR_Afford">
+        <di:waypoint x="200" y="270" />
+        <di:waypoint x="200" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_IR_Score" dmnElementRef="IR_Score">
+        <di:waypoint x="560" y="135" />
+        <di:waypoint x="260" y="135" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_IR_Report" dmnElementRef="IR_Report">
+        <di:waypoint x="260" y="140" />
+        <di:waypoint x="560" y="290" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

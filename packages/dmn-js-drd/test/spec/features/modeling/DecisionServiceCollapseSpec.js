@@ -5,6 +5,7 @@ import TestContainer from 'mocha-test-container-support';
 import DrdModeler from '../../../helper/DrdModeler';
 
 import containmentXML from '../../../fixtures/dmn/decision-service-containment-15.dmn';
+import crossingXML from '../../../fixtures/dmn/decision-service-crossing-15.dmn';
 
 
 /**
@@ -222,9 +223,138 @@ describe('features/modeling - DMN 1.5 Decision Service collapse', function() {
   });
 
 
+  it('should dock a crossing requirement to the service, not drop it',
+    async function() {
+
+      // given
+      await open.call(this, crossingXML);
+
+      const service = () => get('DecisionService_Credit');
+
+      // when
+      collapse('DecisionService_Credit', true);
+
+      // then
+      // a requirement that crosses the boundary is a requirement of the service:
+      // the input data the members are given, and the decisions they are given and
+      // give to. The box is what a reader can see, so that is what the edge ends on.
+      expect(get('IR_Amount')).to.exist;
+      expect(get('IR_Amount').target).to.equal(service());
+      expect(get('IR_Score')).to.exist;
+      expect(get('IR_Score').target).to.equal(service());
+
+      // in either direction: a decision outside requiring one inside
+      expect(get('IR_Report')).to.exist;
+      expect(get('IR_Report').source).to.equal(service());
+
+      // the ends that were always outside are untouched
+      expect(get('IR_Amount').source).to.equal(get('InputData_Amount'));
+      expect(get('IR_Score').source).to.equal(get('Decision_Score'));
+      expect(get('IR_Report').target).to.equal(get('Decision_Report'));
+
+      // a requirement wholly inside has nothing left to draw between, so it goes
+      expect(get('IR_Afford')).not.to.exist;
+    });
+
+
+  it('should write the crossing edge where it is now drawn', async function() {
+
+    // given
+    await open.call(this, crossingXML);
+
+    // when
+    collapse('DecisionService_Credit', true);
+
+    // then
+    // the DI follows the canvas: a saved collapsed DRD says the edge ends on the
+    // box, which is the only thing that diagram draws
+    const service = get('DecisionService_Credit');
+    const waypoints = get('IR_Amount').businessObject.di.get('waypoint');
+    const last = waypoints[waypoints.length - 1];
+
+    expect(last.y).to.be.closeTo(service.y + service.height, 1);
+    expect(last.x).to.be.within(service.x, service.x + service.width);
+  });
+
+
+  it('should dock a crossing requirement back to its decision', async function() {
+
+    // given
+    await open.call(this, crossingXML);
+
+    const before = {
+      amount: get('IR_Amount').waypoints.map(({ x, y }) => ({ x, y })),
+      report: get('IR_Report').waypoints.map(({ x, y }) => ({ x, y }))
+    };
+
+    // when
+    collapse('DecisionService_Credit', true);
+    collapse('DecisionService_Credit', false);
+
+    // then
+    expect(get('IR_Amount').target).to.equal(get('Decision_Afford'));
+    expect(get('IR_Score').target).to.equal(get('Decision_Verdict'));
+    expect(get('IR_Report').source).to.equal(get('Decision_Verdict'));
+    expect(get('IR_Afford')).to.exist;
+
+    // and drawn the way the author drew them
+    expect(get('IR_Amount').waypoints.map(({ x, y }) => ({ x, y })))
+      .to.eql(before.amount);
+    expect(get('IR_Report').waypoints.map(({ x, y }) => ({ x, y })))
+      .to.eql(before.report);
+  });
+
+
+  it('should put the box back the way it was, divider and all', async function() {
+
+    // given
+    await open.call(this, crossingXML);
+
+    const before = boundsOf('DecisionService_Credit');
+    const beforeDivider = dividerY('DecisionService_Credit');
+
+    // when
+    collapse('DecisionService_Credit', true);
+    collapse('DecisionService_Credit', false);
+
+    // then
+    // the collapsed box is 180x100 and its divider is clamped to fit that, so
+    // neither can be recomputed on the way back: unfolding restores what was there
+    expect(boundsOf('DecisionService_Credit')).to.eql(before);
+    expect(dividerY('DecisionService_Credit')).to.eql(beforeDivider);
+  });
+
+
+  it('should undo a fold that re-docked edges, as one step', async function() {
+
+    // given
+    await open.call(this, crossingXML);
+
+    const before = boundsOf('DecisionService_Credit');
+
+    // when
+    collapse('DecisionService_Credit', true);
+    viewer.get('commandStack').undo();
+
+    // then
+    expect(boundsOf('DecisionService_Credit')).to.eql(before);
+    expect(get('IR_Amount').target).to.equal(get('Decision_Afford'));
+    expect(get('IR_Report').source).to.equal(get('Decision_Verdict'));
+    expect(get('IR_Afford')).to.exist;
+  });
+
+
   function boundsOf(id) {
     const { x, y, width, height } = get(id);
 
     return { x, y, width, height };
+  }
+
+  function dividerY(id) {
+    const divider = get(id).businessObject.di.get('decisionServiceDividerLine');
+
+    return divider && divider.waypoint && divider.waypoint.length
+      ? divider.waypoint[0].y
+      : undefined;
   }
 });
