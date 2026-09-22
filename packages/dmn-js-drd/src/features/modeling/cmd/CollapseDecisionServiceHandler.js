@@ -20,18 +20,30 @@ import {
  * what the specification's own example does. Its collapsed DRD simply does not
  * contain them.
  *
- * This is why removeElements is not the tool. A shape.delete takes the decision out
- * of `drgElement` as well (DrdUpdater#updateSemanticParent), and a requirement edge
- * belongs to the decision that requires it, so creating one back would tear it out
- * of its owner. Both directions therefore move depiction only, and never touch the
- * semantic tree.
+ * Only what is drawn *between* members goes with them. A requirement that crosses
+ * the boundary — the input data a member is given, a decision outside that a member
+ * needs, a decision outside that needs a member — is a requirement of the service
+ * itself, and the box is the only thing left to draw it against, so it is re-docked
+ * there rather than dropped. That is also what makes the collapsed picture true:
+ * DMN derives a service's `inputData` and `inputDecision` from exactly these
+ * crossings (§10.4), so an author looking at the folded box sees what the service
+ * is given and what is given it.
+ *
+ * Re-docking moves the endpoint on the canvas and nothing else. The requirement
+ * still belongs to the decision that requires it, and that is why this is its own
+ * command: a shape.delete takes the decision out of `drgElement` as well
+ * (DrdUpdater#updateSemanticParent), and reconnecting through modeling would rewrite
+ * the requirement's owner. Both directions therefore move depiction only, and never
+ * touch the semantic tree.
  *
  * What a fold cannot carry across a save is where the decisions were: DMN has no
  * place to park the bounds of something a diagram does not show — a DMNDiagram takes
  * no owning element (Table 95) and cannot contain another. Within a session the
- * moddle element keeps its DMNShape, so unfolding puts everything back exactly;
- * after a reload the shapes are gone from the document and unfolding lays the
- * members out afresh inside the box.
+ * moddle element keeps its DMNShape, so unfolding puts everything back exactly —
+ * including the service's own bounds and its divider, neither of which can be
+ * recomputed, because the collapsed box is 180x100 and the divider is clamped to
+ * fit it. After a reload the shapes are gone from the document and unfolding lays
+ * the members out afresh inside the box.
  */
 export default function CollapseDecisionServiceHandler(
     canvas, elementRegistry, drdUpdater, modeling, drdFactory, elementFactory) {
@@ -63,7 +75,11 @@ CollapseDecisionServiceHandler.prototype.preExecute = function(context) {
 
   context.depicted = collapse
     ? memberDepictions(element, this._elementRegistry)
-    : hiddenDepictions(element, this._canvas);
+    : hiddenDepictions(element);
+
+  context.geometry = collapse
+    ? expandedGeometry(element)
+    : element._foldedGeometry;
 
   // The members go first. Shrinking the box while they are still drawn would have
   // their compartments re-read off it — the very damage the collapsed guard in
@@ -76,11 +92,36 @@ CollapseDecisionServiceHandler.prototype.preExecute = function(context) {
 
 CollapseDecisionServiceHandler.prototype.postExecute = function(context) {
   var element = context.element,
-      modeling = this._modeling;
+      collapse = context.collapse,
+      depicted = context.depicted,
+      geometry = context.geometry,
+      modeling = this._modeling,
+      drdFactory = this._drdFactory;
 
-  modeling.resizeShape(element, context.collapse
+  modeling.resizeShape(element, collapse
     ? collapsedBounds(element)
-    : expandedBounds(element, context.depicted));
+    : geometry
+      ? geometry.bounds
+      : expandedBounds(element, depicted));
+
+  // A resize recomputes the divider from the box it is given, which is the right
+  // answer for every resize but this one: the divider was clamped into a 180x100
+  // box on the way in, so there is nothing left to recompute it from.
+  if (!collapse && geometry && geometry.dividerY !== undefined) {
+    restoreDivider(modeling, drdFactory, element, geometry.dividerY);
+  }
+
+  // The crossing edges last. Folding, they have to find the box at the size it
+  // ends up; unfolding, they are put back exactly where the author drew them
+  // rather than laid out afresh.
+  depicted.crossing.forEach(function(crossing) {
+    if (collapse) {
+      modeling.layoutConnection(crossing.connection);
+    } else {
+      modeling.updateWaypoints(
+        crossing.connection, copyWaypoints(crossing.waypoints));
+    }
+  });
 };
 
 CollapseDecisionServiceHandler.prototype.execute = function(context) {
@@ -101,11 +142,21 @@ CollapseDecisionServiceHandler.prototype.revert = function(context) {
  */
 CollapseDecisionServiceHandler.prototype._hide = function(context) {
   var self = this,
+      element = context.element,
       canvas = this._canvas,
       depicted = context.depicted,
-      changed = [ context.element ];
+      changed = [ element ];
 
-  // Connections first: a shape cannot leave with an edge still docked to it.
+  // Crossing edges first: re-docking one to the box takes it off the member's
+  // incoming or outgoing list, which is what lets that member leave next.
+  depicted.crossing.forEach(function(crossing) {
+    changed.push(crossing.connection);
+
+    crossing.connection[crossing.end] = element;
+  });
+
+  // Then the edges that are drawn wholly inside: a shape cannot leave with one
+  // still docked to it.
   depicted.connections.forEach(function(connection) {
     changed.push(connection);
     canvas.removeConnection(connection);
@@ -121,7 +172,8 @@ CollapseDecisionServiceHandler.prototype._hide = function(context) {
   // Kept on the service's own shape, not in the model: it is what lets a later
   // unfold put the decisions back where the author had them, and it is nobody's
   // business once the page is reloaded.
-  context.element._foldedDepictions = depicted;
+  element._foldedDepictions = depicted;
+  element._foldedGeometry = context.geometry;
 
   return changed;
 };
@@ -149,7 +201,15 @@ CollapseDecisionServiceHandler.prototype._show = function(context) {
     canvas.addConnection(connection, root);
   });
 
+  // The members are back, so a crossing edge has its own decision to end on again.
+  depicted.crossing.forEach(function(crossing) {
+    changed.push(crossing.connection);
+
+    crossing.connection[crossing.end] = crossing.shape;
+  });
+
   delete context.element._foldedDepictions;
+  delete context.element._foldedGeometry;
 
   return changed;
 };
@@ -159,37 +219,123 @@ CollapseDecisionServiceHandler.prototype._show = function(context) {
 
 /**
  * The shapes a Decision Service is made of that the canvas currently draws, and
- * every connection docked to them.
+ * the edges docked to them, told apart by where their other end is.
+ *
+ * `connections` are drawn wholly inside the service and go with its members.
+ * `crossing` are the ones with an end outside it, which stay and are re-docked to
+ * the box; each entry remembers which end was the member and how the edge was
+ * drawn, so unfolding can put both back.
+ *
+ * The members are collected first and classified second, on purpose: an edge
+ * between two members is only recognisable as internal once both are known.
  */
 function memberDepictions(element, elementRegistry) {
   var hrefs = getDecisionServiceMemberHrefs(element.businessObject),
       shapes = [],
-      connections = [];
+      connections = [],
+      crossing = [];
 
   hrefs.forEach(function(href) {
     var shape = elementRegistry.get(href.replace(/^#/, ''));
 
-    if (!shape || !is(shape, 'dmn:Decision')) {
-      return;
+    if (shape && is(shape, 'dmn:Decision') && shapes.indexOf(shape) === -1) {
+      shapes.push(shape);
     }
+  });
 
-    shapes.push(shape);
-
+  shapes.forEach(function(shape) {
     shape.incoming.concat(shape.outgoing).forEach(function(connection) {
-      if (connections.indexOf(connection) === -1) {
-        connections.push(connection);
+      var end = connection.target === shape ? 'target' : 'source',
+          other = end === 'target' ? connection.source : connection.target;
+
+      // Inside, or docked to the service itself: nothing is left to draw it
+      // between once the members are away.
+      if (shapes.indexOf(other) !== -1 || other === element) {
+        if (connections.indexOf(connection) === -1) {
+          connections.push(connection);
+        }
+
+        return;
       }
+
+      if (hasConnection(crossing, connection)) {
+        return;
+      }
+
+      crossing.push({
+        connection: connection,
+        end: end,
+        shape: shape,
+        waypoints: copyWaypoints(connection.waypoints)
+      });
     });
   });
 
-  return { shapes: shapes, connections: connections };
+  return { shapes: shapes, connections: connections, crossing: crossing };
 }
 
 /**
  * What a fold of this service put away, when this session is the one that folded it.
  */
 function hiddenDepictions(element) {
-  return element._foldedDepictions || { shapes: [], connections: [] };
+  return element._foldedDepictions ||
+    { shapes: [], connections: [], crossing: [] };
+}
+
+function hasConnection(crossing, connection) {
+  return crossing.some(function(entry) {
+    return entry.connection === connection;
+  });
+}
+
+function copyWaypoints(waypoints) {
+  return (waypoints || []).map(function(waypoint) {
+    var copy = { x: waypoint.x, y: waypoint.y };
+
+    if (waypoint.original) {
+      copy.original = { x: waypoint.original.x, y: waypoint.original.y };
+    }
+
+    return copy;
+  });
+}
+
+/**
+ * The service's own geometry, which a fold overwrites and only a record can restore.
+ */
+function expandedGeometry(element) {
+  var divider = element.businessObject.di.get('decisionServiceDividerLine');
+
+  return {
+    bounds: {
+      x: element.x,
+      y: element.y,
+      width: element.width,
+      height: element.height
+    },
+    dividerY: divider && divider.waypoint && divider.waypoint.length
+      ? divider.waypoint[0].y
+      : undefined
+  };
+}
+
+function restoreDivider(modeling, drdFactory, element, dividerY) {
+  var divider = element.businessObject.di.get('decisionServiceDividerLine');
+
+  if (!divider) {
+    return;
+  }
+
+  modeling.updateModdleProperties(element, divider, {
+    waypoint: drdFactory.createDiWaypoints([
+      { x: element.x, y: dividerY },
+      { x: element.x + element.width, y: dividerY }
+    ]).map(function(waypoint) {
+      waypoint.$parent = divider;
+
+      return waypoint;
+    })
+  });
 }
 
 function collapsedBounds(element) {
