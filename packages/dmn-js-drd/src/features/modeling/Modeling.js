@@ -6,6 +6,7 @@ import IdClaimHandler from './cmd/IdClaimHandler.js';
 import UpdateLabelHandler from '../label-editing/cmd/UpdateLabelHandler.js';
 import UpdatePropertiesHandler from './cmd/UpdatePropertiesHandler.js';
 import UpdateModdlePropertiesHandler from './cmd/UpdateModdlePropertiesHandler.js';
+import CollapseDecisionServiceHandler from './cmd/CollapseDecisionServiceHandler.js';
 
 import { clampDecisionServiceDividerY } from './DecisionServiceUtil';
 
@@ -66,6 +67,7 @@ Modeling.prototype.getHandlers = function() {
   handlers['element.updateLabel'] = UpdateLabelHandler;
   handlers['element.updateProperties'] = UpdatePropertiesHandler;
   handlers['element.updateModdleProperties'] = UpdateModdlePropertiesHandler;
+  handlers['decisionService.collapse'] = CollapseDecisionServiceHandler;
 
   return handlers;
 };
@@ -124,5 +126,18 @@ Modeling.prototype.updateLabel = function(element, newLabel, newBounds, hints) {
     newLabel: newLabel,
     newBounds: newBounds,
     hints: hints || {}
+  });
+};
+
+/**
+ * Fold a Decision Service's definition away, or unfold it again (DMN 1.5 §6.2.4).
+ *
+ * @param {Shape} element
+ * @param {boolean} collapse
+ */
+Modeling.prototype.collapseDecisionService = function(element, collapse) {
+  this._commandStack.execute('decisionService.collapse', {
+    element: element,
+    collapse: collapse !== false
   });
 };
