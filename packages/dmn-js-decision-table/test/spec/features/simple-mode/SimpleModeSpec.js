@@ -182,13 +182,39 @@ describe('simple mode', function() {
     // then
     expect(domQuery('.simple-mode-button', testContainer)).not.to.exist;
 
-    setTimeout(() => {
-
-      // but then
-      expect(domQuery('.simple-mode-button', testContainer)).to.exist;
-
-      done();
-    }, 300);
+    // but then, once the debounce has passed
+    eventually(() => domQuery('.simple-mode-button', testContainer), done);
   });
 
 });
+
+
+/**
+ * Wait for something to appear, rather than for the clock.
+ *
+ * debounceInput debounces by 300ms (DEFAULT_DEBOUNCE_TIME), and a test that
+ * waited 300ms for it had no margin at all: min-dash fires the callback at or
+ * after that mark and the re-render comes after the callback, so a timer set to
+ * the same interval races the very thing it waits for. Which one wins depends
+ * on the browser's timer and on how busy the event loop is, so the test held on
+ * one browser and let go on another, on nobody's change in particular.
+ *
+ * @param {Function} find returns the thing, or nothing yet
+ * @param {Function} done mocha's callback
+ * @param {number} [timeout] under mocha's own, so this reports first
+ */
+function eventually(find, done, timeout = 1500) {
+  const deadline = Date.now() + timeout;
+
+  (function poll() {
+    if (find()) {
+      return done();
+    }
+
+    if (Date.now() >= deadline) {
+      return done(new Error(`nothing appeared within ${ timeout }ms`));
+    }
+
+    setTimeout(poll, 20);
+  })();
+}
