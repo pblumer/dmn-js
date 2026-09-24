@@ -52,6 +52,18 @@ export var COLLAPSED_WIDTH = 180;
 export var COLLAPSED_HEIGHT = 100;
 
 /**
+ * The marker that says a Decision Service has its definition folded away: a square
+ * with a plus in it, centred under the name (DMN 1.5 Table 5-2), sitting this far
+ * above the bottom edge.
+ *
+ * Shared rather than each place picking its own, because two things are drawn from
+ * it — the marker itself and the switch that folds and unfolds — and a switch that
+ * does not land on the marker it stands for is two controls where there is one.
+ */
+export var COLLAPSED_MARKER_SIZE = 16;
+export var COLLAPSED_MARKER_MARGIN = 12;
+
+/**
  * Whether a Decision Service is drawn without the details of its definition
  * (DMN 1.5 §6.2.4, DMNShape.isCollapsed).
  *
