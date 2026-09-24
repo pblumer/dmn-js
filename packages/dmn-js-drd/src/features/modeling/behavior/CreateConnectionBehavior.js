@@ -38,7 +38,18 @@ export default function CreateConnectionBehavior(drdFactory, injector) {
 
       targetRef.$parent = connectionBo;
     } else {
-      elementRef = connectionBo[ 'required' + getRequirementType(source) ] = drdFactory
+      var property = getRequirementProperty(source);
+
+      // Nothing else is a requirement, and writing `requiredundefined` onto the
+      // business object rather than saying so is how a drawable edge became an
+      // unsaveable model.
+      if (!property) {
+        throw new Error(
+          'no requirement property for source <' + source.businessObject.$type + '>'
+        );
+      }
+
+      elementRef = connectionBo[ property ] = drdFactory
         .create('dmn:DMNElementReference', {
           href: '#' + source.id
         });
@@ -59,14 +70,24 @@ inherits(CreateConnectionBehavior, CommandInterceptor);
 
 // helpers //////////
 
-function getRequirementType(source) {
-  if (is(source, 'dmn:BusinessKnowledgeModel')) {
-    return 'Knowledge';
+/**
+ * Which reference on the requirement points back at what it requires.
+ *
+ * A Decision Service is an Invocable, exactly as a Business Knowledge Model is —
+ * KnowledgeRequirement#requiredKnowledge is typed to Invocable and DMN 1.5's
+ * requirement table gives the pair two rows, one drawing the service expanded and
+ * one drawing it collapsed. It was missing here, so a knowledge requirement drawn
+ * from a service was created with no `requiredKnowledge` at all: the arrow appeared,
+ * the rules allowed it, and the saved model had a requirement that required nothing.
+ */
+function getRequirementProperty(source) {
+  if (is(source, 'dmn:Invocable')) {
+    return 'requiredKnowledge';
   } else if (is(source, 'dmn:Decision')) {
-    return 'Decision';
+    return 'requiredDecision';
   } else if (is(source, 'dmn:InputData')) {
-    return 'Input';
+    return 'requiredInput';
   } else if (is(source, 'dmn:KnowledgeSource')) {
-    return 'Authority';
+    return 'requiredAuthority';
   }
 }
