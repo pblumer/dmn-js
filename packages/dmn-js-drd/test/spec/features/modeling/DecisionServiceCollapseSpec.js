@@ -190,37 +190,9 @@ describe('features/modeling - DMN 1.5 Decision Service collapse', function() {
   });
 
 
-  it('should be reachable from the context pad, both ways', async function() {
-
-    // given
-    await open.call(this, containmentXML);
-
-    const entriesFor = (id) => Object.keys(
-      viewer.get('contextPad').getEntries(get(id))
-    );
-
-    // then
-    // expanded: the entry offers to fold
-    expect(entriesFor('DecisionService_Approval'))
-      .to.include('decision-service.collapse');
-    expect(viewer.get('contextPad')
-      .getEntries(get('DecisionService_Approval'))['decision-service.collapse']
-      .className).to.eql('dmn-icon-minus');
-
-    // when
-    collapse('DecisionService_Approval', true);
-
-    // then
-    // collapsed: the same entry offers to unfold, and says so with the marker the
-    // renderer already draws on a folded service
-    expect(viewer.get('contextPad')
-      .getEntries(get('DecisionService_Approval'))['decision-service.collapse']
-      .className).to.eql('dmn-icon-plus');
-
-    // and it is a service-only affordance
-    expect(entriesFor('Decision_Unrelated'))
-      .not.to.include('decision-service.collapse');
-  });
+  // How an author reaches the fold is the switch drawn in the box, not a context pad
+  // entry: features/decision-service-toggle holds that, and holds that the pad does
+  // not also carry it.
 
 
   it('should dock a crossing requirement to the service, not drop it',

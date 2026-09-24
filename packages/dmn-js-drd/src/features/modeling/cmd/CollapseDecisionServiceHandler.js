@@ -112,10 +112,12 @@ CollapseDecisionServiceHandler.prototype.postExecute = function(context) {
   }
 
   // The crossing edges last. Folding, they have to find the box at the size it
-  // ends up; unfolding, they are put back exactly where the author drew them
-  // rather than laid out afresh.
+  // ends up; unfolding, they are put back exactly where the author drew them —
+  // unless the folded box was dragged, in which case the member end has travelled
+  // and the other has not, so what was drawn no longer joins them and the edge is
+  // laid out afresh instead.
   depicted.crossing.forEach(function(crossing) {
-    if (collapse) {
+    if (collapse || (geometry && geometry.movedWhileFolded)) {
       modeling.layoutConnection(crossing.connection);
     } else {
       modeling.updateWaypoints(
@@ -163,6 +165,17 @@ CollapseDecisionServiceHandler.prototype._hide = function(context) {
     self._drdUpdater.updateDiParent(connection.businessObject.di, null);
   });
 
+  // Which box each member is drawn inside of, read before it is taken off the
+  // canvas, because removing it clears the parent. Unfolding puts it back there.
+  // Sending it to the root instead would leave the service with no children, and a
+  // container with no children is a rectangle that happens to be behind things: the
+  // next drag moves the box and leaves every decision it holds standing where it
+  // was. That is the same parent DrdImporter gives a member on import, so a service
+  // folded and unfolded is the service that was imported.
+  depicted.parents = depicted.shapes.map(function(shape) {
+    return shape.parent;
+  });
+
   depicted.shapes.forEach(function(shape) {
     changed.push(shape);
     canvas.removeShape(shape);
@@ -189,10 +202,13 @@ CollapseDecisionServiceHandler.prototype._show = function(context) {
       depicted = context.depicted,
       changed = [ context.element ];
 
-  depicted.shapes.forEach(function(shape) {
+  // Back into the service that held it, not onto the root. The DI parent is the
+  // diagram either way — DMNDI has no nesting, every DMNShape is a child of the
+  // DMNDiagram (Table 95) — so only the canvas knows the box holds them.
+  depicted.shapes.forEach(function(shape, index) {
     changed.push(shape);
     self._drdUpdater.updateDiParent(shape.businessObject.di, rootDi);
-    canvas.addShape(shape, root);
+    canvas.addShape(shape, (depicted.parents && depicted.parents[index]) || root);
   });
 
   depicted.connections.forEach(function(connection) {
@@ -213,6 +229,83 @@ CollapseDecisionServiceHandler.prototype._show = function(context) {
 
   return changed;
 };
+
+
+/**
+ * Carry a folded Decision Service's put-away picture along when the box is dragged.
+ *
+ * A folded service holds nothing on the canvas, so there is nothing for diagram-js
+ * to move with it: the decisions, the edges between them and the bounds and divider
+ * the box is restored to all live in a record on the shape. Left alone, dragging a
+ * folded service and unfolding it puts the box straight back where it was folded and
+ * the decisions with it — the drag is silently undone. A collapsed sub-process takes
+ * its contents along; so does this.
+ *
+ * Applied both ways, so undoing the move takes the record back with it.
+ *
+ * @param {djs.model.Shape} element
+ * @param {Point} delta
+ *
+ * @return {boolean} whether there was anything folded to carry
+ */
+export function translateFoldedDepiction(element, delta) {
+  var depicted = element._foldedDepictions,
+      geometry = element._foldedGeometry;
+
+  if (!depicted && !geometry) {
+    return false;
+  }
+
+  if (geometry) {
+    geometry.bounds.x += delta.x;
+    geometry.bounds.y += delta.y;
+
+    if (geometry.dividerY !== undefined) {
+      geometry.dividerY += delta.y;
+    }
+
+    // What a crossing edge was drawn as is no longer true once one of its ends has
+    // moved and the other has not; postExecute lays those out instead of restoring
+    // them. Sticky rather than recomputed, because a drag and its undo both come
+    // through here and the second one does not make the first un-happen.
+    geometry.movedWhileFolded = true;
+  }
+
+  if (!depicted) {
+    return true;
+  }
+
+  depicted.shapes.forEach(function(shape) {
+    shape.x += delta.x;
+    shape.y += delta.y;
+
+    translatePoint(shape.businessObject.di && shape.businessObject.di.bounds, delta);
+  });
+
+  depicted.connections.forEach(function(connection) {
+    var di = connection.businessObject.di;
+
+    connection.waypoints.forEach(function(waypoint) {
+      translatePoint(waypoint, delta);
+      translatePoint(waypoint.original, delta);
+    });
+
+    ((di && di.get('waypoint')) || []).forEach(function(waypoint) {
+      translatePoint(waypoint, delta);
+    });
+  });
+
+  return true;
+}
+
+function translatePoint(point, delta) {
+  if (!point) {
+    return;
+  }
+
+  point.x += delta.x;
+  point.y += delta.y;
+}
 
 
 // helpers //////////

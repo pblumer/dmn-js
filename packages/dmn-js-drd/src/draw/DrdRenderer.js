@@ -29,6 +29,11 @@ import {
   getName
 } from 'dmn-js-shared/lib/util/ModelUtil';
 
+import {
+  COLLAPSED_MARKER_MARGIN,
+  COLLAPSED_MARKER_SIZE
+} from '../features/modeling/DecisionServiceUtil';
+
 var RENDERER_IDS = new Ids();
 
 var black = 'hsl(225, 10%, 15%)';
@@ -278,10 +283,8 @@ export default function DrdRenderer(
   // Enough to keep the name clear of the rounded corner it now sits next to.
   var DECISION_SERVICE_PADDING = 10;
 
-  // The collapsed marker: a square with a plus in it, centred under the name, and
-  // the room the name gives up for it (DMN 1.5 Table 5-2).
-  var COLLAPSED_MARKER_SIZE = 16;
-  var COLLAPSED_MARKER_MARGIN = 12;
+  // The room the name gives up for the collapsed marker (DMN 1.5 Table 5-2); the
+  // marker's own size and margin are shared with the switch drawn on top of it.
   var COLLAPSED_MARKER_ROOM =
     (COLLAPSED_MARKER_SIZE + COLLAPSED_MARKER_MARGIN) * 2;
 
