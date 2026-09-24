@@ -9,6 +9,7 @@ import BendpointsModule from 'diagram-js/lib/features/bendpoints';
 import ContextPadModule from './features/context-pad';
 import ConnectPreviewModule from 'diagram-js/lib/features/connection-preview';
 import DecisionServiceDividerModule from './features/decision-service-divider';
+import DecisionServiceLabelModule from './features/decision-service-label';
 import DecisionServiceToggleModule from './features/decision-service-toggle';
 import DefinitionPropertiesModule from './features/definition-properties/modeler';
 import DistributeElementsModule from './features/distribute-elements';
@@ -141,6 +142,7 @@ Modeler.prototype._modelingModules = [
   PaletteModule,
   ResizeModule,
   DecisionServiceDividerModule,
+  DecisionServiceLabelModule,
   DecisionServiceToggleModule,
   SnappingModule,
   TypeRefDropdownModule

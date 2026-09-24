@@ -39,6 +39,25 @@
 }
 
 /*
+ * The grab handle over a selected Decision Service's name. Barely there until it is
+ * pointed at: it lies on top of the name, and a box drawn around the name at all
+ * times would read as a second element rather than as something to take hold of.
+ */
+.djs-decision-service-label-handle {
+  fill: transparent;
+  stroke: none;
+  cursor: grab;
+}
+
+.djs-decision-service-label-handle:hover {
+  fill: var(--color-blue-205-100-50);
+  fill-opacity: 0.15;
+  stroke: var(--color-blue-205-100-50);
+  stroke-width: 1px;
+  stroke-dasharray: 2, 2;
+}
+
+/*
  * The fold switch a Decision Service carries at the bottom of its box: a plus while
  * its definition is folded away, a minus while it is shown. It is laid exactly over
  * the marker the renderer paints on a folded service, so the two read as one thing.
