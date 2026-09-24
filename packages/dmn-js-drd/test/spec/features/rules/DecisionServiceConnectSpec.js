@@ -143,4 +143,116 @@ describe('features/rules - DMN 1.5 Decision Service connections', function() {
 
   });
 
+
+  [
+    [ 'a decision', 'Decision_Outside' ],
+    [ 'a knowledge model', 'BKM_Instalment' ]
+  ].forEach(function([ what, id ]) {
+
+    it('should say what ' + what + ' invoking a service requires', function() {
+
+      // given
+      const elementRegistry = viewer.get('elementRegistry');
+
+      // when
+      viewer.get('modeling').connect(
+        elementRegistry.get('DecisionService_Rating'),
+        elementRegistry.get(id),
+        { type: 'dmn:KnowledgeRequirement' }
+      );
+
+      // then
+      expect(elementRegistry.get(id).businessObject
+        .get('knowledgeRequirement')
+        .map(requirement => requirement.get('requiredKnowledge').href))
+        .to.eql([ '#DecisionService_Rating' ]);
+    });
+
+  });
+
+
+  // DMN 1.5's requirement table gives the two invocations above two rows each: one
+  // drawing the service expanded, one drawing it collapsed with the fold marker.
+  // A folded service is the same Invocable — folding hides its definition, not what
+  // it is — so both are drawn the same way and both must still be drawable.
+  describe('while the service is folded away', function() {
+
+    beforeEach(function() {
+      viewer.get('modeling').collapseDecisionService(
+        viewer.get('elementRegistry').get('DecisionService_Rating'), true
+      );
+    });
+
+
+    it('should still let a decision invoke it', function() {
+
+      // given
+      const elementRegistry = viewer.get('elementRegistry');
+
+      // when
+      const allowed = viewer.get('drdRules').canConnect(
+        elementRegistry.get('DecisionService_Rating'),
+        elementRegistry.get('Decision_Outside')
+      );
+
+      // then
+      expect(allowed).to.eql({ type: 'dmn:KnowledgeRequirement' });
+    });
+
+
+    it('should still let a knowledge model invoke it', function() {
+
+      // given
+      const elementRegistry = viewer.get('elementRegistry');
+
+      // when
+      const allowed = viewer.get('drdRules').canConnect(
+        elementRegistry.get('DecisionService_Rating'),
+        elementRegistry.get('BKM_Instalment')
+      );
+
+      // then
+      expect(allowed).to.eql({ type: 'dmn:KnowledgeRequirement' });
+    });
+
+
+    it('should draw one, and keep it when the service is unfolded',
+      function() {
+
+        // given
+        const elementRegistry = viewer.get('elementRegistry'),
+              modeling = viewer.get('modeling');
+
+        // when
+        const connection = modeling.connect(
+          elementRegistry.get('DecisionService_Rating'),
+          elementRegistry.get('Decision_Outside'),
+          { type: 'dmn:KnowledgeRequirement' }
+        );
+
+        // then
+        expect(connection).to.exist;
+        expect(elementRegistry.get('DecisionService_Rating')
+          .outgoing.map(edge => edge.id)).to.include(connection.id);
+
+        // and it says what it requires. A Decision Service is an Invocable, which is
+        // what KnowledgeRequirement#requiredKnowledge is typed to; without that the
+        // arrow appeared and the saved model carried a requirement requiring nothing
+        expect(elementRegistry.get('Decision_Outside').businessObject
+          .get('knowledgeRequirement')
+          .map(requirement => requirement.get('requiredKnowledge').href))
+          .to.eql([ '#DecisionService_Rating' ]);
+
+        modeling.collapseDecisionService(
+          elementRegistry.get('DecisionService_Rating'), false
+        );
+
+        expect(elementRegistry.get(connection.id)).to.exist;
+        expect(elementRegistry.get(connection.id).source)
+          .to.equal(elementRegistry.get('DecisionService_Rating'));
+      }
+    );
+
+  });
+
 });
