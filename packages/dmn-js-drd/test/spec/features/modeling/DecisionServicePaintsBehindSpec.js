@@ -153,6 +153,19 @@ describe('features/modeling - DMN 1.5 Decision Service paint order', function() 
     expect(paintsOver(service, get('Decision_Unrelated'))).to.be.false;
   });
 
+
+  it('should start behind a Decision Service that is already there', function() {
+
+    // when
+    const service = drawService();
+
+    // then
+    // two boxes may overlap, because a decision may belong to two services; the one
+    // just drawn is the one that goes underneath, along with what the other holds
+    expect(paintsOver(service, get('DecisionService_Approval'))).to.be.false;
+    expect(paintsOver(service, get('Decision_Output'))).to.be.false;
+  });
+
 });
 
 
