@@ -1,6 +1,8 @@
 import CollapsedDecisionServiceMoveBehavior from
   './CollapsedDecisionServiceMoveBehavior';
 import DecisionServiceDeleteBehavior from './DecisionServiceDeleteBehavior';
+import DecisionServiceLabelBoundsBehavior from
+  './DecisionServiceLabelBoundsBehavior';
 import DecisionServicePaintsBehindBehavior from
   './DecisionServicePaintsBehindBehavior';
 import CreateConnectionBehavior from './CreateConnectionBehavior';
@@ -16,6 +18,7 @@ export default {
   __init__: [
     'collapsedDecisionServiceMoveBehavior',
     'decisionServiceDeleteBehavior',
+    'decisionServiceLabelBoundsBehavior',
     'decisionServicePaintsBehindBehavior',
     'createConnectionBehavior',
     'createShapeBehavior',
@@ -29,6 +32,9 @@ export default {
     'type', CollapsedDecisionServiceMoveBehavior
   ],
   decisionServiceDeleteBehavior: [ 'type', DecisionServiceDeleteBehavior ],
+  decisionServiceLabelBoundsBehavior: [
+    'type', DecisionServiceLabelBoundsBehavior
+  ],
   decisionServicePaintsBehindBehavior: [
     'type', DecisionServicePaintsBehindBehavior
   ],
