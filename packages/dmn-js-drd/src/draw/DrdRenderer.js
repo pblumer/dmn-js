@@ -31,7 +31,8 @@ import {
 
 import {
   COLLAPSED_MARKER_MARGIN,
-  COLLAPSED_MARKER_SIZE
+  COLLAPSED_MARKER_SIZE,
+  DECISION_SERVICE_PADDING
 } from '../features/modeling/DecisionServiceUtil';
 
 var RENDERER_IDS = new Ids();
@@ -280,8 +281,6 @@ export default function DrdRenderer(
   // stroke the rest of the diagram carries.
   var DECISION_SERVICE_STROKE_WIDTH = 4;
 
-  // Enough to keep the name clear of the rounded corner it now sits next to.
-  var DECISION_SERVICE_PADDING = 10;
 
   // The room the name gives up for the collapsed marker (DMN 1.5 Table 5-2); the
   // marker's own size and margin are shared with the switch drawn on top of it.
@@ -369,15 +368,29 @@ export default function DrdRenderer(
       // default below.
       function renderName(align, box) {
         if (bounds) {
-          return renderEmbeddedLabel(p, element, 'center-middle', {
+
+          // The text layout takes the box's *size* and lays the name out from the
+          // group's origin; it never reads the box's x and y. Passing them and
+          // expecting the name to move put every DMNLabel's name back in the top
+          // left at the label's width — the bounds were honoured as a measurement
+          // and ignored as a position. So the box gives the size and the translation
+          // gives the place.
+          var named = renderEmbeddedLabel(p, element, 'center-middle', {
             box: {
-              x: bounds.x - element.x,
-              y: bounds.y - element.y,
+              x: 0,
+              y: 0,
               width: bounds.width,
               height: bounds.height
             },
             padding: 0
           });
+
+          svgAttr(named, {
+            transform: 'translate(' +
+              (bounds.x - element.x) + ',' + (bounds.y - element.y) + ')'
+          });
+
+          return named;
         }
 
         return renderEmbeddedLabel(p, element, align, box);
@@ -416,10 +429,11 @@ export default function DrdRenderer(
         });
       }
 
-      // Expanded: the name goes in the top right of the box, out of the way of the
-      // output decisions the upper compartment holds (DMN 1.5 Figure 5-10). The
-      // padding clears the rounded corner.
-      renderName('right-top', { padding: DECISION_SERVICE_PADDING });
+      // Expanded: the name goes in the top left, where Figures 6-7, 6-8 and 6-9 draw
+      // it. The padding clears the rounded corner. It is only where the name starts
+      // out: §6.2.5 requires it inside the shape and nothing more, and a DMNLabel
+      // with bounds — which renderName prefers — says where the author moved it.
+      renderName('left-top', { padding: DECISION_SERVICE_PADDING });
 
       return rect;
     },

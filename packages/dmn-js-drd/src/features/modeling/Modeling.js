@@ -8,7 +8,10 @@ import UpdatePropertiesHandler from './cmd/UpdatePropertiesHandler.js';
 import UpdateModdlePropertiesHandler from './cmd/UpdateModdlePropertiesHandler.js';
 import CollapseDecisionServiceHandler from './cmd/CollapseDecisionServiceHandler.js';
 
-import { clampDecisionServiceDividerY } from './DecisionServiceUtil';
+import {
+  clampDecisionServiceDividerY,
+  clampDecisionServiceLabelBounds
+} from './DecisionServiceUtil';
 
 
 /**
@@ -103,6 +106,42 @@ Modeling.prototype.updateDecisionServiceDivider = function(element, dividerY) {
   this.updateModdleProperties(element, divider, {
     waypoint: waypoints
   });
+};
+
+/**
+ * Move a Decision Service's name to where the author put it.
+ *
+ * Written as the DMNShape's DMNLabel bounds, which is DMN's own place for it: a
+ * DMNLabel is a di:Shape, so it has Bounds, and §6.2.5 already gives that label the
+ * last word over where the name is shown. So the position round-trips through the
+ * document and means the same thing to a tool that never heard of this editor.
+ *
+ * One command either way, so one undo puts the name back.
+ *
+ * @param {Shape} element
+ * @param {Bounds} bounds
+ */
+Modeling.prototype.updateDecisionServiceLabelBounds = function(element, bounds) {
+  var drdFactory = this._drdFactory,
+      di = element.businessObject.di,
+      label = di.get('label');
+
+  bounds = clampDecisionServiceLabelBounds(element, bounds);
+
+  var diBounds = drdFactory.createDiBounds(bounds);
+
+  if (label) {
+    diBounds.$parent = label;
+
+    return this.updateModdleProperties(element, label, { bounds: diBounds });
+  }
+
+  label = drdFactory.create('dmndi:DMNLabel', { bounds: diBounds });
+
+  label.$parent = di;
+  diBounds.$parent = label;
+
+  this.updateModdleProperties(element, di, { label: label });
 };
 
 Modeling.prototype.updateModdleProperties = function(element, moddleElement, properties) {
