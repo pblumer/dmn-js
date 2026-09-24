@@ -1,5 +1,6 @@
 import {
-  clampDecisionServiceLabelBounds
+  clampDecisionServiceLabelBounds,
+  getDecisionServiceLabelMinWidth
 } from '../modeling/DecisionServiceUtil';
 
 
@@ -23,20 +24,25 @@ var MOVE_PREFIX = 'decisionServiceLabel.move';
  * @param {EventBus} eventBus
  * @param {Dragging} dragging
  * @param {Modeling} modeling
+ * @param {TextRenderer} textRenderer
  */
-export default function DecisionServiceLabelMove(eventBus, dragging, modeling) {
+export default function DecisionServiceLabelMove(
+    eventBus, dragging, modeling, textRenderer) {
+
   this._dragging = dragging;
 
   eventBus.on(MOVE_PREFIX + '.move', function(event) {
     var context = event.context,
         original = context.originalBounds;
 
+    // the same minimum the command applies, so the preview and what is written
+    // cannot disagree and the first drag does not jump
     context.bounds = clampDecisionServiceLabelBounds(context.shape, {
       x: original.x + event.dx,
       y: original.y + event.dy,
       width: original.width,
       height: original.height
-    });
+    }, getDecisionServiceLabelMinWidth(context.shape, textRenderer));
   });
 
   eventBus.on(MOVE_PREFIX + '.end', function(event) {
@@ -53,7 +59,8 @@ export default function DecisionServiceLabelMove(eventBus, dragging, modeling) {
 DecisionServiceLabelMove.$inject = [
   'eventBus',
   'dragging',
-  'modeling'
+  'modeling',
+  'textRenderer'
 ];
 
 /**

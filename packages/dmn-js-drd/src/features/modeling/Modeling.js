@@ -10,7 +10,8 @@ import CollapseDecisionServiceHandler from './cmd/CollapseDecisionServiceHandler
 
 import {
   clampDecisionServiceDividerY,
-  clampDecisionServiceLabelBounds
+  clampDecisionServiceLabelBounds,
+  getDecisionServiceLabelMinWidth
 } from './DecisionServiceUtil';
 
 
@@ -20,17 +21,20 @@ import {
  * @param {Canvas} canvas
  * @param {DrdFactory} drdFactory
  * @param {DrdRules} drdRules
+ * @param {TextRenderer} textRenderer
  * @param {Injector} injector
  */
 export default function Modeling(
     canvas,
     drdFactory,
     drdRules,
+    textRenderer,
     injector
 ) {
   this._canvas = canvas;
   this._drdFactory = drdFactory;
   this._drdRules = drdRules;
+  this._textRenderer = textRenderer;
 
   injector.invoke(BaseModeling, this);
 }
@@ -41,6 +45,7 @@ Modeling.$inject = [
   'canvas',
   'drdFactory',
   'drdRules',
+  'textRenderer',
   'injector'
 ];
 
@@ -126,7 +131,8 @@ Modeling.prototype.updateDecisionServiceLabelBounds = function(element, bounds) 
       di = element.businessObject.di,
       label = di.get('label');
 
-  bounds = clampDecisionServiceLabelBounds(element, bounds);
+  bounds = clampDecisionServiceLabelBounds(
+    element, bounds, getDecisionServiceLabelMinWidth(element, this._textRenderer));
 
   var diBounds = drdFactory.createDiBounds(bounds);
 

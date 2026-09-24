@@ -96,6 +96,22 @@ export default function TextRenderer(config) {
   };
 
   /**
+   * Lay a text out in a box and report the size it came to.
+   *
+   * The same measurement the renderer itself makes, so a caller that needs to know
+   * how much room a name takes reads it from the thing that draws it rather than
+   * from a second guess at the font.
+   *
+   * @param {string} text
+   * @param {Object} [options]
+   *
+   * @return {Dimensions}
+   */
+  this.getDimensions = function(text, options) {
+    return textUtil.getDimensions(text, options || {});
+  };
+
+  /**
    * Get default text style.
    */
   this.getDefaultStyle = function() {
