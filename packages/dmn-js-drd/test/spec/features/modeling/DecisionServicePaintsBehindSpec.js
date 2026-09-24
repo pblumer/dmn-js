@@ -129,7 +129,7 @@ describe('features/modeling - DMN 1.5 Decision Service paint order', function() 
   });
 
 
-  it('should let a caller place it where it asks', function() {
+  it('should go behind even when a caller asks for the front', function() {
 
     // given
     const service = viewer.get('elementFactory').createShape({
@@ -139,8 +139,9 @@ describe('features/modeling - DMN 1.5 Decision Service paint order', function() 
     const root = viewer.get('canvas').getRootElement();
 
     // when
-    // the behaviour is a default, not a rule: something that knows where the shape
-    // belongs says so and is not overruled
+    // this was a default once, and a caller could overrule it. It is an invariant
+    // now: there is no diagram in which a Decision Service drawn over the
+    // requirements crossing its border is what DMN's overlay means.
     viewer.get('commandStack').execute('shape.create', {
       shape: service,
       position: { x: 850, y: 520 },
@@ -149,7 +150,7 @@ describe('features/modeling - DMN 1.5 Decision Service paint order', function() 
     });
 
     // then
-    expect(paintsOver(service, get('Decision_Unrelated'))).to.be.true;
+    expect(paintsOver(service, get('Decision_Unrelated'))).to.be.false;
   });
 
 });
@@ -238,7 +239,7 @@ describe('features/modeling - DMN 1.5 Decision Service paint order on move',
       });
 
 
-    it('should let a caller place it where it asks', function() {
+    it('should go behind even when a caller asks for the front', function() {
 
       // given
       const service = get('DecisionService_Credit');
@@ -246,7 +247,6 @@ describe('features/modeling - DMN 1.5 Decision Service paint order on move',
       const root = viewer.get('canvas').getRootElement();
 
       // when
-      // a default, not a rule, on this side too
       viewer.get('commandStack').execute('shape.move', {
         shape: service,
         delta: { x: 20, y: 0 },
@@ -258,7 +258,81 @@ describe('features/modeling - DMN 1.5 Decision Service paint order on move',
       // then
       expect(
         paintsOver(service, get('IR_Amount'))
-      ).to.be.true;
+      ).to.be.false;
+    });
+
+
+    // The point of an invariant is that it holds for gestures nobody enumerated.
+    // Each of these is a different command, and none of them knows anything about
+    // Decision Services; they are here so that a later one, equally ignorant, is
+    // caught by a test rather than by a reader whose arrow has gone missing.
+    [
+      {
+        what: 'the service is resized',
+        act: () => viewer.get('modeling').resizeShape(get('DecisionService_Credit'),
+          { x: 100, y: 80, width: 400, height: 340 })
+      },
+      {
+        what: 'something outside it is moved',
+        act: () => viewer.get('modeling').moveShape(
+          get('InputData_Amount'), { x: -20, y: 20 })
+      },
+      {
+        what: 'a member is moved',
+        act: () => viewer.get('modeling').moveShape(
+          get('Decision_Afford'), { x: 10, y: 0 })
+      },
+      {
+        what: 'the service is moved with the keyboard',
+        act: () => {
+          viewer.get('selection').select(get('DecisionService_Credit'));
+
+          viewer.get('editorActions').trigger('moveSelection', {
+            direction: 'right', accelerated: false
+          });
+        }
+      },
+      {
+        what: 'the name is moved',
+        act: () => viewer.get('modeling').updateDecisionServiceLabelBounds(
+          get('DecisionService_Credit'), { x: 300, y: 100, width: 80, height: 20 })
+      },
+      {
+        what: 'the service is renamed',
+        act: () => viewer.get('modeling').updateProperties(
+          get('DecisionService_Credit'), { name: 'Renamed' })
+      },
+      {
+        what: 'a drag is undone',
+        act: () => {
+          viewer.get('modeling').moveShape(
+            get('DecisionService_Credit'), { x: 20, y: 0 });
+
+          viewer.get('commandStack').undo();
+        }
+      },
+      {
+        what: 'the service is folded and unfolded',
+        act: () => {
+          const modeling = viewer.get('modeling');
+
+          modeling.collapseDecisionService(get('DecisionService_Credit'), true);
+          modeling.collapseDecisionService(get('DecisionService_Credit'), false);
+        }
+      }
+    ].forEach(({ what, act }) => {
+
+      it('should still be behind the crossing requirement after ' + what,
+        function() {
+
+          // when
+          act();
+
+          // then
+          expect(
+            paintsOver(get('DecisionService_Credit'), get('IR_Amount'))
+          ).to.be.false;
+        });
     });
 
   });

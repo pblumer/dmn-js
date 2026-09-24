@@ -128,29 +128,132 @@ export function getDecisionServiceLabelBounds(shape) {
  *
  * @return {Bounds}
  */
-export function clampDecisionServiceLabelBounds(shape, bounds) {
-  var top = shape.y + DECISION_SERVICE_PADDING,
-      bottom = shape.y + shape.height - DECISION_SERVICE_PADDING - bounds.height;
+export function clampDecisionServiceLabelBounds(shape, bounds, minWidth) {
+  var room = labelRoom(shape);
+
+  var width = bounds.width,
+      height = bounds.height;
+
+  if (minWidth) {
+
+    // Never narrower than the longest word. diagram-js shortens a line that does
+    // not fit by whitespace and hyphens first and cuts mid-word only when there is
+    // nothing else left, so a box that holds the longest word is exactly the box in
+    // which a break can only ever fall between words.
+    //
+    // Width only. Height is not part of fitting a line — lines simply stack — so a
+    // floor on it would rewrite what an author's drag stored and buy nothing.
+    width = Math.max(width, minWidth);
+  }
+
+  // and never wider or taller than the room it has to sit in, so the size cannot
+  // put the name outside the shape that §6.2.5 requires it to be inside
+  width = Math.min(width, room.width);
+  height = Math.min(height, room.height);
+
+  return {
+    x: clamp(bounds.x, room.x, room.x + room.width - width),
+    y: clamp(bounds.y, room.y, Math.max(room.y, room.y + room.height - height)),
+    width: width,
+    height: height
+  };
+}
+
+/**
+ * The rectangle a Decision Service's name has to sit in: inside the box, and above
+ * the divider while there is one.
+ *
+ * @param {Shape} shape
+ *
+ * @return {Bounds}
+ */
+export function getDecisionServiceLabelRoom(shape) {
+  return labelRoom(shape);
+}
+
+function labelRoom(shape) {
+  var x = shape.x + DECISION_SERVICE_PADDING,
+      y = shape.y + DECISION_SERVICE_PADDING,
+      width = Math.max(shape.width - 2 * DECISION_SERVICE_PADDING, 0),
+      bottom = shape.y + shape.height - DECISION_SERVICE_PADDING;
 
   if (!isDecisionServiceCollapsed(shape)) {
     var divider = shape.businessObject.di.get('decisionServiceDividerLine');
 
     if (divider && divider.waypoint && divider.waypoint.length) {
-      bottom = Math.min(bottom, divider.waypoint[0].y - bounds.height);
+      bottom = Math.min(bottom, divider.waypoint[0].y);
     }
   }
 
   return {
-    x: clamp(
-      bounds.x,
-      shape.x + DECISION_SERVICE_PADDING,
-      shape.x + shape.width - DECISION_SERVICE_PADDING - bounds.width
-    ),
-    y: clamp(bounds.y, top, Math.max(top, bottom)),
-    width: bounds.width,
-    height: bounds.height
+    x: x,
+    y: y,
+    width: width,
+    height: Math.max(bottom - y, 0)
   };
 }
+
+/**
+ * The narrowest box a Decision Service's name fits in without a word being cut in
+ * half.
+ *
+ * diagram-js fits a line by `width < Math.round(maxWidth)`, so a box measured to the
+ * text's own width is one pixel short of holding it — which is how a name dragged
+ * once came back broken across two lines, a letter stranded on the second. Hence the
+ * rounding up and the pixel of slack: they are that comparison, not a guess.
+ *
+ * @param {Shape} shape
+ * @param {TextRenderer} textRenderer
+ *
+ * @return {number}
+ */
+export function getDecisionServiceLabelMinWidth(shape, textRenderer) {
+  var name = (shape.businessObject && shape.businessObject.get('name')) || '',
+      style = textRenderer.getDefaultStyle();
+
+  // the units diagram-js is willing to break between
+  var words = name.split(/[\s\u00AD-]+/).filter(Boolean);
+
+  if (!words.length) {
+    words = [ '' ];
+  }
+
+  var width = 0;
+
+  words.forEach(function(word) {
+    width = Math.max(width, textRenderer.getDimensions(word, {
+      box: { width: MEASURE_BOX, height: MEASURE_BOX },
+      style: style
+    }).width);
+  });
+
+  return Math.ceil(width) + FIT_SLACK;
+}
+
+/**
+ * One line of the name's own font, so a resize cannot collapse the box to nothing.
+ *
+ * @param {TextRenderer} textRenderer
+ *
+ * @return {number}
+ */
+export function getDecisionServiceLabelLineHeight(textRenderer) {
+  return textRenderer.getDimensions('X', {
+    box: { width: MEASURE_BOX, height: MEASURE_BOX },
+    style: textRenderer.getDefaultStyle()
+  }).height;
+}
+
+/**
+ * Wide and tall enough that one word is never laid out over two lines while it is
+ * being measured.
+ */
+var MEASURE_BOX = 10000;
+
+/**
+ * One pixel, so the strict comparison above comes out true.
+ */
+var FIT_SLACK = 1;
 
 function clamp(value, low, high) {
   return Math.max(low, Math.min(value, high));
