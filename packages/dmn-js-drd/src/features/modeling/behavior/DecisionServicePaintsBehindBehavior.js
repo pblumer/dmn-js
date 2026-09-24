@@ -1,4 +1,8 @@
+import inherits from 'inherits-browser';
+
 import { forEach } from 'min-dash';
+
+import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
 
 import { is } from 'dmn-js-shared/lib/util/ModelUtil';
 
@@ -37,8 +41,28 @@ var REORDER_PRIORITY = 1500;
  * business objects, never from this array, so rewriting it says nothing about the
  * model. It is also why a caller cannot ask for a Decision Service to be drawn on
  * top any more. There is no diagram in which that is what DMN's overlay means.
+ *
+ * The invariant settles Decision Services against everything else and says nothing
+ * about their order among themselves, which matters where two of them overlap: a
+ * decision may belong to two services (§6.2.5), and a service drawn after another
+ * covers that other one's members, which are drawn inside its group. A newly drawn
+ * service therefore starts at the very back, behind the ones already there — the
+ * division of labour being that the invariant decides the class and the create
+ * default decides the order within it.
  */
-export default function DecisionServicePaintsBehindBehavior(eventBus) {
+export default function DecisionServicePaintsBehindBehavior(eventBus, injector) {
+
+  injector.invoke(CommandInterceptor, this);
+
+  this.preExecute('shape.create', function(context) {
+    if (!is(context.shape, 'dmn:DecisionService')) {
+      return;
+    }
+
+    if (context.parentIndex === undefined) {
+      context.parentIndex = 0;
+    }
+  }, true);
 
   eventBus.on('elements.changed', REORDER_PRIORITY, function(event) {
     var parents = {};
@@ -53,7 +77,9 @@ export default function DecisionServicePaintsBehindBehavior(eventBus) {
   });
 }
 
-DecisionServicePaintsBehindBehavior.$inject = [ 'eventBus' ];
+DecisionServicePaintsBehindBehavior.$inject = [ 'eventBus', 'injector' ];
+
+inherits(DecisionServicePaintsBehindBehavior, CommandInterceptor);
 
 
 /**
