@@ -1,3 +1,5 @@
+import CollapsedDecisionServiceMoveBehavior from
+  './CollapsedDecisionServiceMoveBehavior';
 import CreateConnectionBehavior from './CreateConnectionBehavior';
 import CreateShapeBehavior from './CreateShapeBehavior';
 import LayoutConnectionBehavior from './LayoutConnectionBehavior';
@@ -9,6 +11,7 @@ import NameChangeBehavior from
   'dmn-js-shared/lib/features/modeling/behavior/NameChangeBehavior';
 export default {
   __init__: [
+    'collapsedDecisionServiceMoveBehavior',
     'createConnectionBehavior',
     'createShapeBehavior',
     'idChangeBehavior',
@@ -16,6 +19,9 @@ export default {
     'layoutConnectionBehavior',
     'replaceConnectionBehavior',
     'replaceElementBehavior'
+  ],
+  collapsedDecisionServiceMoveBehavior: [
+    'type', CollapsedDecisionServiceMoveBehavior
   ],
   createConnectionBehavior: [ 'type', CreateConnectionBehavior ],
   createShapeBehavior: [ 'type', CreateShapeBehavior ],
