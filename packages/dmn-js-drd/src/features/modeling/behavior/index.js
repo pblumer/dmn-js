@@ -1,5 +1,6 @@
 import CollapsedDecisionServiceMoveBehavior from
   './CollapsedDecisionServiceMoveBehavior';
+import DecisionServiceDeleteBehavior from './DecisionServiceDeleteBehavior';
 import CreateConnectionBehavior from './CreateConnectionBehavior';
 import CreateShapeBehavior from './CreateShapeBehavior';
 import LayoutConnectionBehavior from './LayoutConnectionBehavior';
@@ -12,6 +13,7 @@ import NameChangeBehavior from
 export default {
   __init__: [
     'collapsedDecisionServiceMoveBehavior',
+    'decisionServiceDeleteBehavior',
     'createConnectionBehavior',
     'createShapeBehavior',
     'idChangeBehavior',
@@ -23,6 +25,7 @@ export default {
   collapsedDecisionServiceMoveBehavior: [
     'type', CollapsedDecisionServiceMoveBehavior
   ],
+  decisionServiceDeleteBehavior: [ 'type', DecisionServiceDeleteBehavior ],
   createConnectionBehavior: [ 'type', CreateConnectionBehavior ],
   createShapeBehavior: [ 'type', CreateShapeBehavior ],
   idChangeBehavior: [ 'type', IdChangeBehavior ],
