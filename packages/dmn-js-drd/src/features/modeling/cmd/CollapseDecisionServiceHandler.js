@@ -6,7 +6,8 @@ import {
 
 import {
   COLLAPSED_WIDTH,
-  COLLAPSED_HEIGHT
+  COLLAPSED_HEIGHT,
+  getDecisionServiceLabelBounds
 } from '../DecisionServiceUtil';
 
 
@@ -109,6 +110,12 @@ CollapseDecisionServiceHandler.prototype.postExecute = function(context) {
   // box on the way in, so there is nothing left to recompute it from.
   if (!collapse && geometry && geometry.dividerY !== undefined) {
     restoreDivider(modeling, drdFactory, element, geometry.dividerY);
+  }
+
+  // Same for the name: the box is back at its own size, so the place the author
+  // chose fits again.
+  if (!collapse && geometry && geometry.labelBounds) {
+    modeling.updateDecisionServiceLabelBounds(element, geometry.labelBounds);
   }
 
   // The crossing edges last. Folding, they have to find the box at the size it
@@ -264,6 +271,11 @@ export function translateFoldedDepiction(element, delta) {
       geometry.dividerY += delta.y;
     }
 
+    if (geometry.labelBounds) {
+      geometry.labelBounds.x += delta.x;
+      geometry.labelBounds.y += delta.y;
+    }
+
     // What a crossing edge was drawn as is no longer true once one of its ends has
     // moved and the other has not; postExecute lays those out instead of restoring
     // them. Sticky rather than recomputed, because a drag and its undo both come
@@ -408,7 +420,12 @@ function expandedGeometry(element) {
     },
     dividerY: divider && divider.waypoint && divider.waypoint.length
       ? divider.waypoint[0].y
-      : undefined
+      : undefined,
+
+    // Where the author put the name, for the same reason the divider is here: a
+    // 180x100 box cannot hold every place a 300x240 one could, so the name is
+    // clamped on the way in and there is nothing left to recompute it from.
+    labelBounds: getDecisionServiceLabelBounds(element)
   };
 }
 

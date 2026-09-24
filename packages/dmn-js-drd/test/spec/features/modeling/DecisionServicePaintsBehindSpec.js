@@ -5,6 +5,7 @@ import TestContainer from 'mocha-test-container-support';
 import DrdModeler from '../../../helper/DrdModeler';
 
 import containmentXML from '../../../fixtures/dmn/decision-service-containment-15.dmn';
+import crossingXML from '../../../fixtures/dmn/decision-service-crossing-15.dmn';
 
 
 /**
@@ -22,6 +23,13 @@ import containmentXML from '../../../fixtures/dmn/decision-service-containment-1
  * Importing was never affected — DrdImporter adds every Decision Service before the
  * rest of the DRG — which is why a stored diagram looked right and the same diagram
  * drawn by hand did not.
+ *
+ * Dragging one was affected in the same way and for the same reason, which is what
+ * the second block below is about: diagram-js moves a shape by taking it out of its
+ * parent's children and putting it back, and putting it back with no index asked for
+ * puts it at the end. A stored diagram therefore drew correctly right up to the
+ * moment the author nudged the box, at which point the requirement crossing its
+ * border vanished under it.
  */
 describe('features/modeling - DMN 1.5 Decision Service paint order', function() {
 
@@ -145,3 +153,112 @@ describe('features/modeling - DMN 1.5 Decision Service paint order', function() 
   });
 
 });
+
+
+describe('features/modeling - DMN 1.5 Decision Service paint order on move',
+  function() {
+
+    let modeler, viewer;
+
+    beforeEach(async function() {
+      modeler = new DrdModeler({
+        container: TestContainer.get(this),
+        dmnVersion: '1.5'
+      });
+
+      const { warnings } = await modeler.importXML(crossingXML);
+
+      expect(warnings.map(warning => warning.message).join('\n')).to.eql('');
+
+      viewer = modeler.getActiveViewer();
+    });
+
+    afterEach(function() {
+      modeler && modeler.destroy();
+
+      modeler = viewer = null;
+    });
+
+    const get = (id) => viewer.get('elementRegistry').get(id);
+
+    const paintsOver = (a, b) => {
+      const registry = viewer.get('elementRegistry');
+
+      const drawn = Array.from(
+        viewer.get('canvas')._svg.querySelectorAll('.djs-element')
+      );
+
+      return drawn.indexOf(registry.getGraphics(a)) >
+        drawn.indexOf(registry.getGraphics(b));
+    };
+
+
+    it('should be behind the requirement crossing its border, as imported',
+      function() {
+
+        // then
+        expect(
+          paintsOver(get('DecisionService_Credit'),
+            get('IR_Amount'))
+        ).to.be.false;
+      });
+
+
+    it('should still be behind it after it is dragged', function() {
+
+      // given
+      const service = get('DecisionService_Credit');
+
+      // when
+      viewer.get('modeling').moveShape(service, { x: 20, y: 0 });
+
+      // then
+      expect(
+        paintsOver(service, get('IR_Amount'))
+      ).to.be.false;
+    });
+
+
+    it('should still be behind it after the drag is undone and redone',
+      function() {
+
+        // given
+        const service = get('DecisionService_Credit');
+
+        viewer.get('modeling').moveShape(service, { x: 20, y: 0 });
+
+        // when
+        viewer.get('commandStack').undo();
+        viewer.get('commandStack').redo();
+
+        // then
+        expect(
+          paintsOver(service, get('IR_Amount'))
+        ).to.be.false;
+      });
+
+
+    it('should let a caller place it where it asks', function() {
+
+      // given
+      const service = get('DecisionService_Credit');
+
+      const root = viewer.get('canvas').getRootElement();
+
+      // when
+      // a default, not a rule, on this side too
+      viewer.get('commandStack').execute('shape.move', {
+        shape: service,
+        delta: { x: 20, y: 0 },
+        newParent: root,
+        newParentIndex: root.children.length - 1,
+        hints: {}
+      });
+
+      // then
+      expect(
+        paintsOver(service, get('IR_Amount'))
+      ).to.be.true;
+    });
+
+  });
